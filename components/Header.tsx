@@ -21,23 +21,26 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-gray-900">
-          CA27 People
+    <header className="bg-white border-b-4 border-secondary">
+      <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-lg">C</span>
+          </div>
+          <span className="text-2xl font-bold text-primary">CA27 People</span>
         </Link>
-        <nav className="flex gap-4">
+        <nav className="flex items-center gap-4">
           {isLoggedIn ? (
             <>
               <Link
                 href="/profile/edit"
-                className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                className="px-5 py-2 text-primary font-medium hover:bg-cream rounded-full transition"
               >
                 プロフィール編集
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-5 py-2 bg-cream text-primary font-medium rounded-full hover:bg-gray-100 transition"
               >
                 ログアウト
               </button>
@@ -46,13 +49,13 @@ export default function Header() {
             <>
               <Link
                 href="/login"
-                className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                className="px-5 py-2 text-primary font-medium hover:bg-cream rounded-full transition"
               >
                 ログイン
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                className="px-5 py-2 bg-primary text-white font-medium rounded-full hover:bg-secondary transition"
               >
                 新規登録
               </Link>

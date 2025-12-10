@@ -42,8 +42,10 @@ export default function ProfileDetail() {
 
   if (loading) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <p className="text-center text-gray-500">読み込み中...</p>
+      <main className="min-h-screen bg-cream">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <p className="text-center text-gray-500">読み込み中...</p>
+        </div>
       </main>
     )
   }
@@ -52,18 +54,21 @@ export default function ProfileDetail() {
     return null
   }
 
-  return (
-    <main className="max-w-4xl mx-auto px-4 py-8">
-      <Link href="/" className="text-green-500 hover:underline mb-6 inline-block">
-        ← 一覧に戻る
-      </Link>
+  const hasSnsLinks = profile.sns_links && 
+    (profile.sns_links.twitter || profile.sns_links.instagram || profile.sns_links.github)
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="bg-gradient-to-r from-green-400 to-green-600 h-32"></div>
-        
-        <div className="px-8 pb-8">
-          <div className="-mt-16 mb-4">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-200 overflow-hidden">
+  return (
+    <main className="min-h-screen bg-cream">
+      <div className="bg-gradient-to-r from-primary to-secondary h-48"></div>
+
+      <div className="max-w-4xl mx-auto px-4 -mt-32">
+        <Link href="/" className="inline-block text-white hover:underline mb-6">
+          ← 一覧に戻る
+        </Link>
+
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="p-8 flex flex-col md:flex-row gap-8 items-start">
+            <div className="w-40 h-40 rounded-xl bg-cream overflow-hidden flex-shrink-0 shadow-md">
               {profile.photo_url ? (
                 <img
                   src={profile.photo_url}
@@ -71,103 +76,109 @@ export default function ProfileDetail() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
-                  No Image
+                <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
+                  👤
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div>
+                  {profile.interested_department && (
+                    <p className="text-primary font-medium mb-1">{profile.interested_department}</p>
+                  )}
+                  <h1 className="text-3xl font-bold text-dark mb-4">{profile.name}</h1>
+                </div>
+                {isOwner && (
+                  <Link
+                    href="/profile/edit"
+                    className="px-5 py-2 bg-primary text-white rounded-full hover:bg-secondary transition"
+                  >
+                    編集する
+                  </Link>
+                )}
+              </div>
+
+              {profile.tags && profile.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {profile.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-4 py-1 bg-secondary/20 text-primary rounded-full text-sm font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{profile.name}</h1>
-              {profile.interested_department && (
-                <p className="text-gray-600 mt-1">{profile.interested_department}</p>
-              )}
-            </div>
-            {isOwner && (
-              <Link
-                href="/profile/edit"
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-              >
-                編集する
-              </Link>
-            )}
-          </div>
+          <div className="h-1 bg-gradient-to-r from-primary to-secondary"></div>
 
-          {profile.tags && profile.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
-              {profile.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-6">
+          <div className="p-8 space-y-8">
             {profile.career && (
-              <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">これまでの経歴</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">{profile.career}</p>
-              </section>
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3">■ これまでの経歴</h2>
+                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.career}</p>
+              </div>
             )}
 
             {profile.effort && (
-              <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">人生で頑張ったこと</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">{profile.effort}</p>
-              </section>
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3">■ 人生で頑張ったこと</h2>
+                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.effort}</p>
+              </div>
             )}
 
             {profile.goals && (
-              <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">27卒でやりたいこと</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">{profile.goals}</p>
-              </section>
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3">■ 27卒でやりたいこと</h2>
+                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.goals}</p>
+              </div>
             )}
 
             {profile.hobbies && (
-              <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">ハマってる趣味</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">{profile.hobbies}</p>
-              </section>
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3">■ ハマってる趣味</h2>
+                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.hobbies}</p>
+              </div>
             )}
 
             {profile.reason_for_ca && (
-              <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">CAに決めた理由</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">{profile.reason_for_ca}</p>
-              </section>
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3">■ CAに決めた理由</h2>
+                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.reason_for_ca}</p>
+              </div>
             )}
 
-            {profile.sns_links && Object.values(profile.sns_links).some(v => v) && (
-              <section>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">SNS</h2>
+            {hasSnsLinks && (
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3">■ SNS</h2>
                 <div className="flex gap-4">
-                  {profile.sns_links.twitter && (
-                    <a href={profile.sns_links.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                  {profile.sns_links?.twitter && (
+                    <a href={profile.sns_links.twitter} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
                       X (Twitter)
                     </a>
                   )}
-                  {profile.sns_links.instagram && (
-                    <a href={profile.sns_links.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:underline">
+                  {profile.sns_links?.instagram && (
+                    <a href={profile.sns_links.instagram} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
                       Instagram
                     </a>
                   )}
-                  {profile.sns_links.github && (
-                    <a href={profile.sns_links.github} target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:underline">
+                  {profile.sns_links?.github && (
+                    <a href={profile.sns_links.github} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
                       GitHub
                     </a>
                   )}
                 </div>
-              </section>
+              </div>
             )}
           </div>
         </div>
+
+        <div className="h-16"></div>
       </div>
     </main>
   )

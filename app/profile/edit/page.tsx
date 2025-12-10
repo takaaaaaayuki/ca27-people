@@ -37,7 +37,7 @@ export default function EditProfile() {
     setUserId(user.id)
 
     async function fetchProfile() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
@@ -87,7 +87,6 @@ export default function EditProfile() {
     try {
       let photoUrl = profile.photo_url
 
-      // 画像をアップロード
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
         const fileName = `${userId}-${Date.now()}.${fileExt}`
@@ -96,9 +95,7 @@ export default function EditProfile() {
           .from('avatars')
           .upload(fileName, imageFile)
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError)
-        } else {
+        if (!uploadError) {
           const { data: urlData } = supabase.storage
             .from('avatars')
             .getPublicUrl(fileName)
@@ -106,7 +103,6 @@ export default function EditProfile() {
         }
       }
 
-      // プロフィールを更新
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -125,14 +121,12 @@ export default function EditProfile() {
         .eq('user_id', userId)
 
       if (error) {
-        console.error('Update error:', error)
         alert('保存に失敗しました')
       } else {
         alert('保存しました！')
         router.push('/')
       }
     } catch (err) {
-      console.error('Error:', err)
       alert('エラーが発生しました')
     }
 
@@ -141,264 +135,217 @@ export default function EditProfile() {
 
   if (loading) {
     return (
-      <main className="max-w-2xl mx-auto px-4 py-8">
-        <p className="text-center text-gray-500">読み込み中...</p>
+      <main className="min-h-screen bg-cream">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <p className="text-center text-gray-500">読み込み中...</p>
+        </div>
       </main>
     )
   }
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-8">プロフィール編集</h1>
+    <main className="min-h-screen bg-cream">
+      <div className="bg-gradient-to-r from-primary to-secondary py-8">
+        <div className="max-w-2xl mx-auto px-4">
+          <h1 className="text-2xl font-bold text-white">プロフィール編集</h1>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 写真 */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            プロフィール写真
-          </label>
-          <div className="flex items-center gap-4">
-            <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden">
-              {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 写真 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-lg font-bold text-primary mb-4">プロフィール写真</h2>
+            <div className="flex items-center gap-6">
+              <div className="w-24 h-24 rounded-full bg-cream overflow-hidden shadow-md">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">
+                    👤
+                  </div>
+                )}
+              </div>
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white hover:file:bg-secondary"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  No Image
-                </div>
-              )}
+                <p className="text-xs text-gray-400 mt-2">JPG, PNG形式（推奨: 正方形の画像）</p>
+              </div>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="text-sm text-gray-500"
-            />
-          </div>
-        </div>
-
-        {/* 基本情報 */}
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-lg font-semibold border-b pb-2">基本情報</h2>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              名前 *
-            </label>
-            <input
-              type="text"
-              value={profile.name || ''}
-              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              興味のある事業部
-            </label>
-            <input
-              type="text"
-              value={profile.interested_department || ''}
-              onChange={(e) =>
-                setProfile({ ...profile, interested_department: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="例: AbemaTV, Cygames, AI事業本部"
-            />
-          </div>
-        </div>
-
-        {/* 自己紹介 */}
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-lg font-semibold border-b pb-2">自己紹介</h2>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              これまでの経歴（学校・サークル・部活）
-            </label>
-            <textarea
-              value={profile.career || ''}
-              onChange={(e) => setProfile({ ...profile, career: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="例: 〇〇大学 △△学部 / テニスサークル所属"
-            />
+          {/* 基本情報 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-lg font-bold text-primary mb-4">基本情報</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">名前 *</label>
+                <input
+                  type="text"
+                  value={profile.name || ''}
+                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">興味のある事業部</label>
+                <input
+                  type="text"
+                  value={profile.interested_department || ''}
+                  onChange={(e) => setProfile({ ...profile, interested_department: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="例: AbemaTV, Cygames, AI事業本部"
+                />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              人生で頑張ったこと
-            </label>
-            <textarea
-              value={profile.effort || ''}
-              onChange={(e) => setProfile({ ...profile, effort: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+          {/* 自己紹介 */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-lg font-bold text-primary mb-4">自己紹介</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">これまでの経歴（学校・サークル・部活）</label>
+                <textarea
+                  value={profile.career || ''}
+                  onChange={(e) => setProfile({ ...profile, career: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="例: 〇〇大学 △△学部 / テニスサークル所属"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">人生で頑張ったこと</label>
+                <textarea
+                  value={profile.effort || ''}
+                  onChange={(e) => setProfile({ ...profile, effort: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">27卒でやりたいこと</label>
+                <textarea
+                  value={profile.goals || ''}
+                  onChange={(e) => setProfile({ ...profile, goals: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">ハマってる趣味</label>
+                <textarea
+                  value={profile.hobbies || ''}
+                  onChange={(e) => setProfile({ ...profile, hobbies: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">CAに決めた理由</label>
+                <textarea
+                  value={profile.reason_for_ca || ''}
+                  onChange={(e) => setProfile({ ...profile, reason_for_ca: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              27卒でやりたいこと
-            </label>
-            <textarea
-              value={profile.goals || ''}
-              onChange={(e) => setProfile({ ...profile, goals: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+          {/* SNSリンク */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-lg font-bold text-primary mb-4">SNSリンク</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">X (Twitter)</label>
+                <input
+                  type="url"
+                  value={profile.sns_links?.twitter || ''}
+                  onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, twitter: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="https://x.com/username"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">Instagram</label>
+                <input
+                  type="url"
+                  value={profile.sns_links?.instagram || ''}
+                  onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, instagram: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="https://instagram.com/username"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">GitHub</label>
+                <input
+                  type="url"
+                  value={profile.sns_links?.github || ''}
+                  onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, github: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="https://github.com/username"
+                />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              ハマってる趣味
-            </label>
-            <textarea
-              value={profile.hobbies || ''}
-              onChange={(e) => setProfile({ ...profile, hobbies: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+          {/* タグ */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-lg font-bold text-primary mb-4">自分を表すタグ</h2>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="タグを入力してEnter"
+              />
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="px-6 py-3 bg-cream text-primary font-medium rounded-lg hover:bg-secondary/20 transition"
+              >
+                追加
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {profile.tags?.map((tag) => (
+                <span key={tag} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/20 text-primary rounded-full">
+                  {tag}
+                  <button type="button" onClick={() => handleRemoveTag(tag)} className="text-primary/60 hover:text-primary">
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CAに決めた理由
-            </label>
-            <textarea
-              value={profile.reason_for_ca || ''}
-              onChange={(e) =>
-                setProfile({ ...profile, reason_for_ca: e.target.value })
-              }
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-        </div>
-
-        {/* SNSリンク */}
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-lg font-semibold border-b pb-2">SNSリンク</h2>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              X (Twitter)
-            </label>
-            <input
-              type="url"
-              value={profile.sns_links?.twitter || ''}
-              onChange={(e) =>
-                setProfile({
-                  ...profile,
-                  sns_links: { ...profile.sns_links, twitter: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="https://x.com/username"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Instagram
-            </label>
-            <input
-              type="url"
-              value={profile.sns_links?.instagram || ''}
-              onChange={(e) =>
-                setProfile({
-                  ...profile,
-                  sns_links: { ...profile.sns_links, instagram: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="https://instagram.com/username"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              GitHub
-            </label>
-            <input
-              type="url"
-              value={profile.sns_links?.github || ''}
-              onChange={(e) =>
-                setProfile({
-                  ...profile,
-                  sns_links: { ...profile.sns_links, github: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="https://github.com/username"
-            />
-          </div>
-        </div>
-
-        {/* タグ */}
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <h2 className="text-lg font-semibold border-b pb-2">自分を表すタグ</h2>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="タグを入力してEnterまたは追加ボタン"
-            />
+          {/* 送信ボタン */}
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-4 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition disabled:bg-gray-400"
+            >
+              {saving ? '保存中...' : '保存する'}
+            </button>
             <button
               type="button"
-              onClick={handleAddTag}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              onClick={() => router.push('/')}
+              className="px-8 py-4 bg-white text-dark font-medium rounded-lg hover:bg-gray-100 transition shadow-sm"
             >
-              追加
+              キャンセル
             </button>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            {profile.tags?.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full"
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="text-green-500 hover:text-green-700"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* 送信ボタン */}
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400"
-          >
-            {saving ? '保存中...' : '保存する'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="px-6 py-3 bg-gray-200 rounded-lg hover:bg-gray-300"
-          >
-            キャンセル
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </main>
   )
 }
