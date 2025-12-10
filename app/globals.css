@@ -1,13 +1,83 @@
+/* 必ず一番上に Tailwind を書く */
 @import "tailwindcss";
 
+/* テーマ変数 */
 @theme {
   --color-primary: #358a3f;
   --color-secondary: #82be32;
-  --color-cream: #f5f5eb;
-  --color-dark: #333333;
+  --color-cream: #f8f7f4;
+  --color-dark: #1a1a1a;
+  --font-display: 'Noto Sans JP', sans-serif;
+  --font-body: 'Zen Kaku Gothic New', sans-serif;
 }
 
+/* 全体設定 */
 body {
   background-color: var(--color-cream);
   color: var(--color-dark);
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* 見出し用フォント */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+/* タイトル・大見出し */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+
+/* 本文 */
+.font-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+/* スムーズスクロール */
+html {
+  scroll-behavior: smooth;
+}
+
+/* カスタムスクロールバー */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* 選択時のハイライト */
+::selection {
+  background-color: var(--color-secondary);
+  color: white;
+}
+
+/* フェードインアニメーション */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out forwards;
 }

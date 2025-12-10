@@ -7,10 +7,18 @@ import { useRouter } from 'next/navigation'
 export default function Header() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
     setIsLoggedIn(!!userStr)
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const handleLogout = () => {
@@ -21,26 +29,31 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white border-b-4 border-secondary">
-      <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">C</span>
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white'}`}>
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-11 h-11 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300 group-hover:scale-105 transform">
+            <span className="text-white font-bold text-xl font-display">C</span>
           </div>
-          <span className="text-2xl font-bold text-primary">CA27 People</span>
+          <div>
+            <span className="text-xl font-bold text-dark tracking-tight font-display">CA27</span>
+            <span className="text-xl font-bold text-primary tracking-tight font-display ml-1">People</span>
+          </div>
         </Link>
-        <nav className="flex items-center gap-4">
+
+        <nav className="flex items-center gap-3">
           {isLoggedIn ? (
             <>
               <Link
                 href="/profile/edit"
-                className="px-5 py-2 text-primary font-medium hover:bg-cream rounded-full transition"
+                className="px-5 py-2.5 text-dark font-medium hover:text-primary transition-colors duration-300 relative group"
               >
                 プロフィール編集
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-5 py-2 bg-cream text-primary font-medium rounded-full hover:bg-gray-100 transition"
+                className="px-5 py-2.5 bg-cream text-dark font-medium rounded-full hover:bg-gray-200 transition-all duration-300"
               >
                 ログアウト
               </button>
@@ -49,13 +62,14 @@ export default function Header() {
             <>
               <Link
                 href="/login"
-                className="px-5 py-2 text-primary font-medium hover:bg-cream rounded-full transition"
+                className="px-5 py-2.5 text-dark font-medium hover:text-primary transition-colors duration-300 relative group"
               >
                 ログイン
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
               </Link>
               <Link
                 href="/register"
-                className="px-5 py-2 bg-primary text-white font-medium rounded-full hover:bg-secondary transition"
+                className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-full hover:shadow-lg hover:scale-105 transform transition-all duration-300"
               >
                 新規登録
               </Link>

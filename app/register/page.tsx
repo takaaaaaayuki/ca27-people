@@ -71,24 +71,24 @@ export default function Register() {
   }
 
   return (
-    <main className="min-h-screen bg-cream flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">C</span>
+    <main className="min-h-screen bg-gradient-to-br from-cream to-white flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md animate-fadeIn">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <span className="text-white font-display text-3xl">C</span>
           </div>
-          <h1 className="text-2xl font-bold text-dark">新規登録</h1>
+          <h1 className="text-3xl font-display text-dark">新規登録</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-lg">
+        <form onSubmit={handleSubmit} className="bg-white p-10 rounded-3xl shadow-xl">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-body">
               {error}
             </div>
           )}
 
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-dark mb-2">
+          <div className="mb-6">
+            <label className="block text-sm font-display text-dark mb-2">
               メールアドレス
             </label>
             <input
@@ -96,13 +96,13 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-5 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-body transition-all duration-300"
               placeholder="example@email.com"
             />
           </div>
 
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-dark mb-2">
+          <div className="mb-6">
+            <label className="block text-sm font-display text-dark mb-2">
               パスワード
             </label>
             <input
@@ -110,13 +110,13 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-5 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-body transition-all duration-300"
               placeholder="6文字以上"
             />
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-dark mb-2">
+          <div className="mb-8">
+            <label className="block text-sm font-display text-dark mb-2">
               パスワード（確認）
             </label>
             <input
@@ -124,7 +124,7 @@ export default function Register() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-5 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-body transition-all duration-300"
               placeholder="もう一度入力"
             />
           </div>
@@ -132,12 +132,12 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-display text-lg rounded-xl hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             {loading ? '登録中...' : '登録する'}
           </button>
 
-          <p className="mt-6 text-center text-sm text-gray-600">
+          <p className="mt-8 text-center text-sm text-gray-500 font-body">
             すでにアカウントをお持ちの方は
             <Link href="/login" className="text-primary font-medium hover:underline ml-1">
               ログイン
