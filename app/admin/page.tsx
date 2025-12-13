@@ -11,7 +11,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 管理者認証チェック
     const isAdmin = localStorage.getItem('isAdmin')
     if (!isAdmin) {
       router.push('/admin/login')
@@ -109,7 +108,11 @@ export default function AdminDashboard() {
                   </div>
                 </td>
                 <td className="px-6 py-4 font-medium text-gray-900">{profile.name}</td>
-                <td className="px-6 py-4 text-gray-600">{profile.interested_department || '-'}</td>
+                <td className="px-6 py-4 text-gray-600">
+                  {profile.interested_departments && profile.interested_departments.length > 0 
+                    ? profile.interested_departments.join(', ') 
+                    : '-'}
+                </td>
                 <td className="px-6 py-4 text-gray-600">
                   {new Date(profile.created_at).toLocaleDateString('ja-JP')}
                 </td>
