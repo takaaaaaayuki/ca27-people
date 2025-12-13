@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
+import { formatText } from '@/lib/textFormatter'
 
 export default function ProfileDetail() {
   const params = useParams()
@@ -127,35 +128,50 @@ export default function ProfileDetail() {
             {profile.career && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ これまでの経歴</h2>
-                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.career}</p>
+                <div 
+                  className="text-dark leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: formatText(profile.career) }}
+                />
               </div>
             )}
 
             {profile.effort && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ 人生で頑張ったこと</h2>
-                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.effort}</p>
+                <div 
+                  className="text-dark leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: formatText(profile.effort) }}
+                />
               </div>
             )}
 
             {profile.goals && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ 27卒でやりたいこと</h2>
-                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.goals}</p>
+                <div 
+                  className="text-dark leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: formatText(profile.goals) }}
+                />
               </div>
             )}
 
             {profile.hobbies && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ ハマってる趣味</h2>
-                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.hobbies}</p>
+                <div 
+                  className="text-dark leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: formatText(profile.hobbies) }}
+                />
               </div>
             )}
 
             {profile.reason_for_ca && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ CAに決めた理由</h2>
-                <p className="text-dark leading-relaxed whitespace-pre-wrap">{profile.reason_for_ca}</p>
+                <div 
+                  className="text-dark leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: formatText(profile.reason_for_ca) }}
+                />
               </div>
             )}
 
