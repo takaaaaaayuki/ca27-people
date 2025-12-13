@@ -81,3 +81,13 @@ html {
 .animate-fadeIn {
   animation: fadeIn 0.6s ease-out forwards;
 }
+
+/* スクロールバー非表示（横スクロール用） */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

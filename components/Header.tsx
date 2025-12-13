@@ -29,7 +29,13 @@ export default function Header() {
   }
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white'}`}>
+    <header
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-white/95 backdrop-blur-md shadow-lg'
+          : 'bg-white'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-11 h-11 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300 group-hover:scale-105 transform">
@@ -37,7 +43,9 @@ export default function Header() {
           </div>
           <div>
             <span className="text-xl font-bold text-dark tracking-tight">CA27</span>
-            <span className="text-xl font-bold text-primary tracking-tight ml-1">People</span>
+            <span className="text-xl font-bold text-primary tracking-tight ml-1">
+              People
+            </span>
           </div>
         </Link>
 
@@ -47,6 +55,14 @@ export default function Header() {
             className="px-5 py-2.5 text-dark font-medium hover:text-primary transition-colors duration-300"
           >
             イベント
+          </Link>
+
+          {/* 追加：ニュース */}
+          <Link
+            href="/posts"
+            className="px-5 py-2.5 text-dark font-medium hover:text-primary transition-colors duration-300"
+          >
+            ニュース
           </Link>
 
           {isLoggedIn ? (

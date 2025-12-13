@@ -56,3 +56,23 @@ export type ParticipantWithProfile = {
     photo_url: string | null
   } | null
 }
+
+export type Post = {
+  id: string
+  user_id: string | null
+  title: string
+  content: string | null
+  thumbnail_url: string | null
+  external_url: string | null
+  post_type: 'blog' | 'event' | 'news'
+  is_official: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type PostWithAuthor = Post & {
+  author: {
+    name: string
+    photo_url: string | null
+  } | null
+}

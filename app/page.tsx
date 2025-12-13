@@ -1,14 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Profile } from '@/lib/types'
+import { Profile, PostWithAuthor } from '@/lib/types'
 import ProfileCard from '@/components/ProfileCard'
+import NewsCard from '@/components/NewsCard'
 import { DEPARTMENT_OPTIONS, ROLES, RoleKey } from '@/lib/constants'
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([])
+  const [posts, setPosts] = useState<PostWithAuthor[]>([])
   const [loading, setLoading] = useState(true)
   const [searchText, setSearchText] = useState('')
   const [selectedDepartment, setSelectedDepartment] = useState('')
@@ -16,29 +19,65 @@ export default function Home() {
   const [showDeptFilter, setShowDeptFilter] = useState(false)
 
   useEffect(() => {
-    async function fetchProfiles() {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+    fetchData()
+  }, [])
 
-      if (error) {
-        console.error('Error fetching profiles:', error)
-      } else {
-        setProfiles(data || [])
-        setFilteredProfiles(data || [])
-      }
-      setLoading(false)
+  async function fetchData() {
+    // プロフィール取得
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError)
+    } else {
+      setProfiles(profilesData || [])
+      setFilteredProfiles(profilesData || [])
     }
 
-    fetchProfiles()
-  }, [])
+    // 投稿取得（最新5件）
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (postsError) {
+      console.error('Error fetching posts:', postsError)
+    } else if (postsData && postsData.length > 0) {
+      // 投稿者のプロフィール情報を取得
+      const userIds = postsData.filter(p => p.user_id).map(p => p.user_id)
+      let profilesMap: Record<string, { name: string; photo_url: string | null }> = {}
+      
+      if (userIds.length > 0) {
+        const { data: authorProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, name, photo_url')
+          .in('user_id', userIds)
+        
+        if (authorProfiles) {
+          authorProfiles.forEach(p => {
+            profilesMap[p.user_id] = { name: p.name, photo_url: p.photo_url }
+          })
+        }
+      }
+
+      const postsWithAuthors = postsData.map(post => ({
+        ...post,
+        author: post.user_id ? profilesMap[post.user_id] || null : null
+      }))
+
+      setPosts(postsWithAuthors)
+    }
+
+    setLoading(false)
+  }
 
   // 検索・フィルター処理
   useEffect(() => {
     let result = profiles
 
-    // テキスト検索（名前・タグ）
     if (searchText) {
       const lowerSearch = searchText.toLowerCase()
       result = result.filter(profile => {
@@ -48,14 +87,12 @@ export default function Home() {
       })
     }
 
-    // 事業部フィルター
     if (selectedDepartment) {
       result = result.filter(profile => {
         return profile.interested_departments?.includes(selectedDepartment)
       })
     }
 
-    // 職種フィルター
     if (selectedRole) {
       result = result.filter(profile => profile.role === selectedRole)
     }
@@ -69,7 +106,6 @@ export default function Home() {
     setSelectedRole('')
   }
 
-  // 職種別の人数をカウント
   const roleCounts = {
     business: profiles.filter(p => p.role === 'business' || !p.role).length,
     engineer: profiles.filter(p => p.role === 'engineer').length,
@@ -92,6 +128,29 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* ニュースセクション */}
+      {posts.length > 0 && (
+        <div className="bg-white py-8 border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-dark flex items-center gap-2">
+                📰 ニュース & ブログ
+              </h2>
+              <Link href="/posts" className="text-primary text-sm font-medium hover:underline">
+                すべて見る →
+              </Link>
+            </div>
+            
+            {/* 横スクロール */}
+            <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 scrollbar-hide">
+              {posts.map((post) => (
+                <NewsCard key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 検索セクション */}
       <div className="max-w-7xl mx-auto px-6 py-8">
