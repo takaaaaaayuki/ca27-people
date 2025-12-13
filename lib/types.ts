@@ -25,3 +25,15 @@ export type Profile = {
   created_at: string
   updated_at: string
 }
+
+export type Event = {
+  id: string
+  title: string
+  description: string | null
+  event_date: string
+  event_time: string | null
+  location: string | null
+  organizer: string | null
+  created_by: string | null
+  created_at: string
+}
