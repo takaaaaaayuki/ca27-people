@@ -209,9 +209,9 @@ export default function EditProfile() {
                 <span>→</span>
                 <u>下線がつきます</u>
               </div>
-              <p className="text-gray-500 text-xs mt-2">
+              {/* <p className="text-gray-500 text-xs mt-2">
                 ※ 組み合わせもOK: **==太字で赤字==**
-              </p>
+              </p> */}
             </div>
           )}
         </div>
