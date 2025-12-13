@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
+import { DEPARTMENT_OPTIONS } from '@/lib/constants'
 
 export default function EditProfile() {
   const router = useRouter()
@@ -16,7 +17,7 @@ export default function EditProfile() {
     career: '',
     effort: '',
     goals: '',
-    interested_department: '',
+    interested_departments: [],
     hobbies: '',
     reason_for_ca: '',
     sns_links: {},
@@ -25,6 +26,7 @@ export default function EditProfile() {
   const [tagInput, setTagInput] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [showDeptSelector, setShowDeptSelector] = useState(false)
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -44,7 +46,10 @@ export default function EditProfile() {
         .single()
 
       if (data) {
-        setProfile(data)
+        setProfile({
+          ...data,
+          interested_departments: data.interested_departments || [],
+        })
         if (data.photo_url) {
           setPreviewUrl(data.photo_url)
         }
@@ -80,6 +85,28 @@ export default function EditProfile() {
     })
   }
 
+  const handleDeptToggle = (dept: string) => {
+    const current = profile.interested_departments || []
+    if (current.includes(dept)) {
+      setProfile({
+        ...profile,
+        interested_departments: current.filter(d => d !== dept),
+      })
+    } else {
+      setProfile({
+        ...profile,
+        interested_departments: [...current, dept],
+      })
+    }
+  }
+
+  const handleRemoveDept = (dept: string) => {
+    setProfile({
+      ...profile,
+      interested_departments: (profile.interested_departments || []).filter(d => d !== dept),
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -111,7 +138,7 @@ export default function EditProfile() {
           career: profile.career,
           effort: profile.effort,
           goals: profile.goals,
-          interested_department: profile.interested_department,
+          interested_departments: profile.interested_departments,
           hobbies: profile.hobbies,
           reason_for_ca: profile.reason_for_ca,
           sns_links: profile.sns_links,
@@ -192,15 +219,72 @@ export default function EditProfile() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
+              
+              {/* 興味のある事業部（複数選択） */}
               <div>
-                <label className="block text-sm font-medium text-dark mb-2">興味のある事業部</label>
-                <input
-                  type="text"
-                  value={profile.interested_department || ''}
-                  onChange={(e) => setProfile({ ...profile, interested_department: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="例: AbemaTV, Cygames, AI事業本部"
-                />
+                <label className="block text-sm font-medium text-dark mb-2">興味のある事業部（複数選択可）</label>
+                
+                {/* 選択済みの事業部 */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {(profile.interested_departments || []).map((dept) => (
+                    <span key={dept} className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                      {dept}
+                      <button type="button" onClick={() => handleRemoveDept(dept)} className="text-primary/60 hover:text-primary">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                {/* 事業部選択ボタン */}
+                <button
+                  type="button"
+                  onClick={() => setShowDeptSelector(!showDeptSelector)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left text-gray-500 hover:border-primary transition"
+                >
+                  {showDeptSelector ? '閉じる' : '事業部を選択...'}
+                </button>
+
+                {/* 事業部セレクター */}
+                {showDeptSelector && (
+                  <div className="mt-3 border border-gray-200 rounded-lg max-h-96 overflow-y-auto">
+                    {Object.entries(DEPARTMENT_OPTIONS).map(([category, divisions]) => (
+                      <div key={category} className="border-b border-gray-100 last:border-b-0">
+                        <div className="px-4 py-2 bg-gray-50 font-bold text-dark text-sm">
+                          {category}
+                        </div>
+                        {Object.entries(divisions).map(([division, departments]) => (
+                          <div key={division}>
+                            <label className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={(profile.interested_departments || []).includes(division)}
+                                onChange={() => handleDeptToggle(division)}
+                                className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                              />
+                              <span className="font-medium text-dark">{division}</span>
+                            </label>
+                            {departments.length > 0 && (
+                              <div className="pl-8">
+                                {departments.map((dept) => (
+                                  <label key={dept} className="flex items-center gap-3 px-4 py-1.5 hover:bg-gray-50 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={(profile.interested_departments || []).includes(dept)}
+                                      onChange={() => handleDeptToggle(dept)}
+                                      className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                                    />
+                                    <span className="text-sm text-gray-600">{dept}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -280,6 +364,16 @@ export default function EditProfile() {
                   onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, instagram: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="https://instagram.com/username"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">Facebook</label>
+                <input
+                  type="url"
+                  value={profile.sns_links?.facebook || ''}
+                  onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, facebook: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="https://facebook.com/username"
                 />
               </div>
               <div>
