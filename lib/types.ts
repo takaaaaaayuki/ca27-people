@@ -22,6 +22,7 @@ export type Profile = {
     facebook?: string
   }
   tags: string[]
+  role: 'business' | 'engineer' | 'designer' | null
   created_at: string
   updated_at: string
 }
@@ -36,4 +37,22 @@ export type Event = {
   organizer: string | null
   created_by: string | null
   created_at: string
+}
+
+export type EventParticipant = {
+  id: string
+  event_id: string
+  user_id: string
+  created_at: string
+}
+
+export type ParticipantWithProfile = {
+  id: string
+  event_id: string
+  user_id: string
+  created_at: string
+  profile: {
+    name: string
+    photo_url: string | null
+  } | null
 }

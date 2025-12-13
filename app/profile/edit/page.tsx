@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
-import { DEPARTMENT_OPTIONS } from '@/lib/constants'
+import { DEPARTMENT_OPTIONS, ROLES } from '@/lib/constants'
 import { formatText } from '@/lib/textFormatter'
 
 export default function EditProfile() {
@@ -23,6 +23,7 @@ export default function EditProfile() {
     reason_for_ca: '',
     sns_links: {},
     tags: [],
+    role: 'business',
   })
   const [tagInput, setTagInput] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -52,6 +53,7 @@ export default function EditProfile() {
         setProfile({
           ...data,
           interested_departments: data.interested_departments || [],
+          role: data.role || 'business',
         })
         if (data.photo_url) {
           setPreviewUrl(data.photo_url)
@@ -146,6 +148,7 @@ export default function EditProfile() {
           reason_for_ca: profile.reason_for_ca,
           sns_links: profile.sns_links,
           tags: profile.tags,
+          role: profile.role,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
@@ -209,9 +212,6 @@ export default function EditProfile() {
                 <span>→</span>
                 <u>下線がつきます</u>
               </div>
-              {/* <p className="text-gray-500 text-xs mt-2">
-                ※ 組み合わせもOK: **==太字で赤字==**
-              </p> */}
             </div>
           )}
         </div>
@@ -255,6 +255,27 @@ export default function EditProfile() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
+              </div>
+
+              {/* 職種 */}
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">職種 *</label>
+                <div className="flex gap-3">
+                  {Object.entries(ROLES).map(([key, value]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setProfile({ ...profile, role: key as 'business' | 'engineer' | 'designer' })}
+                      className={`flex-1 py-3 px-4 rounded-lg border-2 transition font-medium ${
+                        profile.role === key
+                          ? `${value.bgLight} ${value.textColor} border-current`
+                          : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      {value.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               
               {/* 興味のある事業部（複数選択） */}

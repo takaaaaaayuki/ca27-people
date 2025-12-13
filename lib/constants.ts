@@ -1,3 +1,27 @@
+export const ROLES = {
+  business: {
+    label: 'ビジネス',
+    color: 'bg-blue-500',
+    bgLight: 'bg-blue-100',
+    textColor: 'text-blue-700',
+  },
+  engineer: {
+    label: 'エンジニア',
+    color: 'bg-green-500',
+    bgLight: 'bg-green-100',
+    textColor: 'text-green-700',
+  },
+  designer: {
+    label: 'デザイナー',
+    color: 'bg-purple-500',
+    bgLight: 'bg-purple-100',
+    textColor: 'text-purple-700',
+  },
+} as const
+
+export type RoleKey = keyof typeof ROLES
+
+
 export const DEPARTMENT_OPTIONS: Record<string, Record<string, string[]>> = {
   "広告": {
     "インターネット広告事業本部": [

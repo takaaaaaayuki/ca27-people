@@ -1,11 +1,15 @@
 import Link from 'next/link'
 import { Profile } from '@/lib/types'
+import { ROLES } from '@/lib/constants'
 
 type Props = {
   profile: Profile
 }
 
 export default function ProfileCard({ profile }: Props) {
+  const role = profile.role || 'business'
+  const roleInfo = ROLES[role as keyof typeof ROLES]
+
   return (
     <Link href={`/profile/${profile.id}`}>
       <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:-translate-y-2">
@@ -22,6 +26,11 @@ export default function ProfileCard({ profile }: Props) {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          
+          {/* 職種バッジ */}
+          <div className={`absolute top-3 left-3 px-3 py-1 ${roleInfo.color} text-white text-xs font-bold rounded-full`}>
+            {roleInfo.label}
+          </div>
         </div>
 
         <div className="p-5">

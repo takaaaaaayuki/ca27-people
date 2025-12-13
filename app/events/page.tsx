@@ -8,6 +8,7 @@ import { Event } from '@/lib/types'
 export default function EventsPage() {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([])
   const [pastEvents, setPastEvents] = useState<Event[]>([])
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [showPastEvents, setShowPastEvents] = useState(false)
@@ -38,12 +39,28 @@ export default function EventsPage() {
     if (upcomingError) console.error('Error fetching upcoming events:', upcomingError)
     if (pastError) console.error('Error fetching past events:', pastError)
 
+    const allEvents = [...(upcoming || []), ...(past || [])]
+    
+    // 各イベントの参加者数を取得
+    const counts: Record<string, number> = {}
+    for (const event of allEvents) {
+      const { count } = await supabase
+        .from('event_participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+      counts[event.id] = count || 0
+    }
+    setParticipantCounts(counts)
+
     setUpcomingEvents(upcoming || [])
     setPastEvents(past || [])
     setLoading(false)
   }
 
-  async function handleDelete(eventId: string, eventTitle: string) {
+  async function handleDelete(e: React.MouseEvent, eventId: string, eventTitle: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    
     const confirmed = window.confirm(`「${eventTitle}」を削除しますか？`)
     if (!confirmed) return
 
@@ -71,57 +88,67 @@ export default function EventsPage() {
 
   const EventCard = ({ event, isPast = false }: { event: Event; isPast?: boolean }) => {
     const { month, day, weekday } = formatDate(event.event_date)
+    const count = participantCounts[event.id] || 0
+    
     return (
-      <div
-        className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition flex ${isPast ? 'opacity-70' : ''}`}
-      >
-        {/* 日付 */}
-        <div className={`w-24 ${isPast ? 'bg-gray-400' : 'bg-primary'} text-white flex flex-col items-center justify-center py-4`}>
-          <span className="text-sm">{month}月</span>
-          <span className="text-3xl font-bold">{day}</span>
-          <span className="text-sm">({weekday})</span>
-        </div>
+      <Link href={`/events/${event.id}`}>
+        <div
+          className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition flex cursor-pointer ${isPast ? 'opacity-70' : ''}`}
+        >
+          {/* 日付 */}
+          <div className={`w-24 ${isPast ? 'bg-gray-400' : 'bg-primary'} text-white flex flex-col items-center justify-center py-4`}>
+            <span className="text-sm">{month}月</span>
+            <span className="text-3xl font-bold">{day}</span>
+            <span className="text-sm">({weekday})</span>
+          </div>
 
-        {/* 内容 */}
-        <div className="flex-1 p-5">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-dark">{event.title}</h3>
-              {isPast && (
-                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">終了</span>
+          {/* 内容 */}
+          <div className="flex-1 p-5">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold text-dark">{event.title}</h3>
+                {isPast && (
+                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">終了</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {/* 参加者数 */}
+                <span className="text-sm text-primary font-medium">
+                  👥 {count}人参加
+                </span>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => handleDelete(e, event.id, event.title)}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    削除
+                  </button>
+                )}
+              </div>
+            </div>
+            {event.description && (
+              <p className="text-gray-600 text-sm mb-3 mt-2 line-clamp-2">{event.description}</p>
+            )}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+              {event.event_time && (
+                <span className="flex items-center gap-1">
+                  🕐 {event.event_time}
+                </span>
+              )}
+              {event.location && (
+                <span className="flex items-center gap-1">
+                  📍 {event.location}
+                </span>
+              )}
+              {event.organizer && (
+                <span className="flex items-center gap-1">
+                  👤 {event.organizer}
+                </span>
               )}
             </div>
-            {isAdmin && (
-              <button
-                onClick={() => handleDelete(event.id, event.title)}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
-                削除
-              </button>
-            )}
-          </div>
-          {event.description && (
-            <p className="text-gray-600 text-sm mb-3 mt-2 line-clamp-2">{event.description}</p>
-          )}
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-            {event.event_time && (
-              <span className="flex items-center gap-1">
-                🕐 {event.event_time}
-              </span>
-            )}
-            {event.location && (
-              <span className="flex items-center gap-1">
-                📍 {event.location}
-              </span>
-            )}
-            {event.organizer && (
-              <span className="flex items-center gap-1">
-                👤 {event.organizer}
-              </span>
-            )}
           </div>
         </div>
-      </div>
+      </Link>
     )
   }
 
@@ -158,7 +185,7 @@ export default function EventsPage() {
             {/* これからのイベント */}
             <section className="mb-12">
               <h2 className="text-2xl font-bold text-dark mb-6 flex items-center gap-2">
-                <span className="text-primary"></span> これからのイベント
+                🎉 これからのイベント
                 <span className="text-sm font-normal text-gray-500 ml-2">({upcomingEvents.length}件)</span>
               </h2>
 
@@ -185,7 +212,7 @@ export default function EventsPage() {
                   onClick={() => setShowPastEvents(!showPastEvents)}
                   className="w-full text-left text-xl font-bold text-dark mb-6 flex items-center gap-2 hover:text-primary transition"
                 >
-                  <span className="text-gray-400"></span> 過去のイベント
+                  📁 過去のイベント
                   <span className="text-sm font-normal text-gray-500 ml-2">({pastEvents.length}件)</span>
                   <span className="ml-auto text-gray-400">{showPastEvents ? '▲' : '▼'}</span>
                 </button>

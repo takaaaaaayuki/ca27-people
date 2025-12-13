@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
 import ProfileCard from '@/components/ProfileCard'
-import { DEPARTMENT_OPTIONS } from '@/lib/constants'
+import { DEPARTMENT_OPTIONS, ROLES, RoleKey } from '@/lib/constants'
 
 export default function Home() {
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -12,6 +12,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [searchText, setSearchText] = useState('')
   const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [selectedRole, setSelectedRole] = useState<RoleKey | ''>('')
   const [showDeptFilter, setShowDeptFilter] = useState(false)
 
   useEffect(() => {
@@ -54,12 +55,25 @@ export default function Home() {
       })
     }
 
+    // 職種フィルター
+    if (selectedRole) {
+      result = result.filter(profile => profile.role === selectedRole)
+    }
+
     setFilteredProfiles(result)
-  }, [searchText, selectedDepartment, profiles])
+  }, [searchText, selectedDepartment, selectedRole, profiles])
 
   const clearFilters = () => {
     setSearchText('')
     setSelectedDepartment('')
+    setSelectedRole('')
+  }
+
+  // 職種別の人数をカウント
+  const roleCounts = {
+    business: profiles.filter(p => p.role === 'business' || !p.role).length,
+    engineer: profiles.filter(p => p.role === 'engineer').length,
+    designer: profiles.filter(p => p.role === 'designer').length,
   }
 
   return (
@@ -82,6 +96,33 @@ export default function Home() {
       {/* 検索セクション */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+          {/* 職種タブ */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setSelectedRole('')}
+              className={`px-5 py-2.5 rounded-full font-medium transition ${
+                selectedRole === ''
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              すべて ({profiles.length})
+            </button>
+            {Object.entries(ROLES).map(([key, value]) => (
+              <button
+                key={key}
+                onClick={() => setSelectedRole(key as RoleKey)}
+                className={`px-5 py-2.5 rounded-full font-medium transition ${
+                  selectedRole === key
+                    ? `${value.color} text-white`
+                    : `${value.bgLight} ${value.textColor} hover:opacity-80`
+                }`}
+              >
+                {value.label} ({roleCounts[key as RoleKey]})
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col md:flex-row gap-4">
             {/* テキスト検索 */}
             <div className="flex-1">
@@ -161,7 +202,7 @@ export default function Home() {
             </div>
 
             {/* クリアボタン */}
-            {(searchText || selectedDepartment) && (
+            {(searchText || selectedDepartment || selectedRole) && (
               <button
                 onClick={clearFilters}
                 className="px-5 py-3 text-gray-500 hover:text-primary transition"
@@ -210,7 +251,7 @@ export default function Home() {
             </div>
             <p className="text-gray-600 text-lg mb-2">該当するプロフィールが見つかりません</p>
             <p className="text-gray-400">検索条件を変更してみてください</p>
-            {(searchText || selectedDepartment) && (
+            {(searchText || selectedDepartment || selectedRole) && (
               <button
                 onClick={clearFilters}
                 className="mt-4 px-6 py-2 bg-primary text-white rounded-full hover:bg-secondary transition"
