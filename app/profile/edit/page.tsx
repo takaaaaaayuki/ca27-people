@@ -1,17 +1,154 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
-import { DEPARTMENT_OPTIONS, ROLES } from '@/lib/constants'
+import { DEPARTMENT_OPTIONS, ROLES, MBTI_TYPES } from '@/lib/constants'
 import { formatText } from '@/lib/textFormatter'
+
+// ツールバー付きテキストエリアコンポーネント
+function RichTextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 5,
+  onImageUpload,
+  uploadingImage = false,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  rows?: number
+  onImageUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  uploadingImage?: boolean
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [showPreview, setShowPreview] = useState(false)
+
+  const insertFormatting = (before: string, after: string, placeholder: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = value.slice(start, end) || placeholder
+    const newContent = value.slice(0, start) + before + selectedText + after + value.slice(end)
+    onChange(newContent)
+
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length)
+    }, 0)
+  }
+
+  const renderPreview = (text: string) => {
+    if (!text) return ''
+    let html = text
+    html = html.replace(/^### (.+)$/gm, '<h3 class="text-base font-bold text-dark mt-4 mb-1">$1</h3>')
+    html = html.replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold text-dark mt-4 mb-2">$1</h2>')
+    html = html.replace(/^- (.+)$/gm, '<li class="ml-4">• $1</li>')
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-2 rounded-lg max-w-full" />')
+    html = formatText(html)
+    return html
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-2">
+        <label className="block text-sm font-medium text-dark">{label}</label>
+        <button
+          type="button"
+          onClick={() => setShowPreview(!showPreview)}
+          className="text-xs text-primary hover:underline"
+        >
+          {showPreview ? '✏️ 編集' : '👁️ プレビュー'}
+        </button>
+      </div>
+
+      {!showPreview && (
+        <div className="flex flex-wrap gap-1 mb-2 p-2 bg-gray-50 rounded-lg">
+          <button
+            type="button"
+            onClick={() => insertFormatting('## ', '', '見出し')}
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100"
+          >
+            見出し
+          </button>
+          <button
+            type="button"
+            onClick={() => insertFormatting('**', '**', 'テキスト')}
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 font-bold"
+          >
+            B
+          </button>
+          <button
+            type="button"
+            onClick={() => insertFormatting('==', '==', 'テキスト')}
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 text-red-500"
+          >
+            赤
+          </button>
+          <button
+            type="button"
+            onClick={() => insertFormatting('__', '__', 'テキスト')}
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 underline"
+          >
+            U
+          </button>
+          <button
+            type="button"
+            onClick={() => insertFormatting('- ', '', 'リスト')}
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100"
+          >
+            • リスト
+          </button>
+          {onImageUpload && (
+            <label className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 cursor-pointer">
+              📷 画像
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onImageUpload}
+                disabled={uploadingImage}
+                className="hidden"
+              />
+            </label>
+          )}
+          {uploadingImage && <span className="text-xs text-gray-500">アップロード中...</span>}
+        </div>
+      )}
+
+      {showPreview ? (
+        <div className="min-h-[100px] p-4 border border-gray-200 rounded-lg bg-gray-50">
+          {value ? (
+            <div dangerouslySetInnerHTML={{ __html: renderPreview(value) }} />
+          ) : (
+            <p className="text-gray-400">内容がありません</p>
+          )}
+        </div>
+      ) : (
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={rows}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder={placeholder}
+        />
+      )}
+    </div>
+  )
+}
 
 export default function EditProfile() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [profile, setProfile] = useState<Partial<Profile>>({
     name: '',
     photo_url: '',
@@ -24,13 +161,13 @@ export default function EditProfile() {
     sns_links: {},
     tags: [],
     role: 'business',
+    mbti: null,
   })
   const [tagInput, setTagInput] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showDeptSelector, setShowDeptSelector] = useState(false)
-  const [showHelp, setShowHelp] = useState(false)
-  const [previewField, setPreviewField] = useState<string | null>(null)
+  const [showMbtiSelector, setShowMbtiSelector] = useState(false)
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -54,6 +191,7 @@ export default function EditProfile() {
           ...data,
           interested_departments: data.interested_departments || [],
           role: data.role || 'business',
+          mbti: data.mbti || null,
         })
         if (data.photo_url) {
           setPreviewUrl(data.photo_url)
@@ -71,6 +209,42 @@ export default function EditProfile() {
       setImageFile(file)
       setPreviewUrl(URL.createObjectURL(file))
     }
+  }
+
+  // テキストエリア内の画像アップロード
+  const handleContentImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'career' | 'effort' | 'goals' | 'hobbies' | 'reason_for_ca'
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+
+    setUploadingImage(true)
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `profile-${userId}-${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('post-images')
+      .upload(fileName, file)
+
+    if (uploadError) {
+      alert('画像のアップロードに失敗しました')
+      console.error(uploadError)
+    } else {
+      const { data: urlData } = supabase.storage
+        .from('post-images')
+        .getPublicUrl(fileName)
+      
+      const imageMarkdown = `\n![画像](${urlData.publicUrl})\n`
+      setProfile({
+        ...profile,
+        [field]: (profile[field] || '') + imageMarkdown
+      })
+    }
+
+    setUploadingImage(false)
+    e.target.value = ''
   }
 
   const handleAddTag = () => {
@@ -149,6 +323,7 @@ export default function EditProfile() {
           sns_links: profile.sns_links,
           tags: profile.tags,
           role: profile.role,
+          mbti: profile.mbti,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', userId)
@@ -176,6 +351,13 @@ export default function EditProfile() {
     )
   }
 
+  // MBTIをグループ別に整理
+  const mbtiGroups = Object.entries(MBTI_TYPES).reduce((acc, [key, value]) => {
+    if (!acc[value.group]) acc[value.group] = []
+    acc[value.group].push({ key, ...value })
+    return acc
+  }, {} as Record<string, Array<{ key: string; label: string; group: string; color: string }>>)
+
   return (
     <main className="min-h-screen bg-cream">
       <div className="bg-gradient-to-r from-primary to-secondary py-8">
@@ -185,37 +367,6 @@ export default function EditProfile() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* 装飾ヘルプ */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
-          <button
-            type="button"
-            onClick={() => setShowHelp(!showHelp)}
-            className="w-full flex justify-between items-center text-left"
-          >
-            <span className="font-bold text-primary">✨ テキスト装飾の使い方</span>
-            <span className="text-gray-400">{showHelp ? '▲' : '▼'}</span>
-          </button>
-          {showHelp && (
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <code className="bg-gray-200 px-2 py-1 rounded">**テキスト**</code>
-                <span>→</span>
-                <strong className="font-bold">太字になります</strong>
-              </div>
-              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <code className="bg-gray-200 px-2 py-1 rounded">==テキスト==</code>
-                <span>→</span>
-                <span className="text-red-500 font-medium">赤字になります</span>
-              </div>
-              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <code className="bg-gray-200 px-2 py-1 rounded">__テキスト__</code>
-                <span>→</span>
-                <u>下線がつきます</u>
-              </div>
-            </div>
-          )}
-        </div>
-
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 写真 */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -276,6 +427,59 @@ export default function EditProfile() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* MBTI */}
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">MBTI</label>
+                
+                {profile.mbti && (
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES]?.color || 'bg-gray-100'} rounded-full text-sm font-medium`}>
+                      {MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES]?.label || profile.mbti}
+                      <button type="button" onClick={() => setProfile({ ...profile, mbti: null })} className="text-gray-500 hover:text-gray-700">
+                        ×
+                      </button>
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowMbtiSelector(!showMbtiSelector)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left text-gray-500 hover:border-primary transition"
+                >
+                  {showMbtiSelector ? '閉じる' : 'MBTIを選択...'}
+                </button>
+
+                {showMbtiSelector && (
+                  <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+                    {Object.entries(mbtiGroups).map(([group, types]) => (
+                      <div key={group} className="border-b border-gray-100 last:border-b-0">
+                        <div className={`px-4 py-2 font-bold text-sm ${types[0].color}`}>
+                          {group}
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 p-2">
+                          {types.map((type) => (
+                            <button
+                              key={type.key}
+                              type="button"
+                              onClick={() => {
+                                setProfile({ ...profile, mbti: type.key })
+                                setShowMbtiSelector(false)
+                              }}
+                              className={`px-3 py-2 text-left rounded-lg text-sm hover:bg-gray-50 transition ${
+                                profile.mbti === type.key ? 'bg-primary/10 text-primary font-medium' : ''
+                              }`}
+                            >
+                              {type.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               {/* 興味のある事業部（複数選択） */}
@@ -347,137 +551,49 @@ export default function EditProfile() {
           {/* 自己紹介 */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">自己紹介</h2>
-            <div className="space-y-4">
-              {/* 経歴 */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-dark">これまでの経歴（学校・サークル・部活）</label>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewField(previewField === 'career' ? null : 'career')}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {previewField === 'career' ? 'プレビューを閉じる' : 'プレビュー'}
-                  </button>
-                </div>
-                <textarea
-                  value={profile.career || ''}
-                  onChange={(e) => setProfile({ ...profile, career: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="例: 〇〇大学 △△学部 / テニスサークル所属"
-                />
-                {previewField === 'career' && profile.career && (
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">プレビュー:</p>
-                    <div className="text-dark leading-relaxed" dangerouslySetInnerHTML={{ __html: formatText(profile.career) }} />
-                  </div>
-                )}
-              </div>
+            <p className="text-xs text-gray-500 mb-4">📷 ボタンで画像を追加できます</p>
+            <div className="space-y-6">
+              <RichTextArea
+                label="これまでの経歴（学校・サークル・部活）"
+                value={profile.career || ''}
+                onChange={(value) => setProfile({ ...profile, career: value })}
+                placeholder="例: 〇〇大学 △△学部 / テニスサークル所属"
+                onImageUpload={(e) => handleContentImageUpload(e, 'career')}
+                uploadingImage={uploadingImage}
+              />
 
-              {/* 頑張ったこと */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-dark">人生で頑張ったこと</label>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewField(previewField === 'effort' ? null : 'effort')}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {previewField === 'effort' ? 'プレビューを閉じる' : 'プレビュー'}
-                  </button>
-                </div>
-                <textarea
-                  value={profile.effort || ''}
-                  onChange={(e) => setProfile({ ...profile, effort: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                {previewField === 'effort' && profile.effort && (
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">プレビュー:</p>
-                    <div className="text-dark leading-relaxed" dangerouslySetInnerHTML={{ __html: formatText(profile.effort) }} />
-                  </div>
-                )}
-              </div>
+              <RichTextArea
+                label="人生で頑張ったこと"
+                value={profile.effort || ''}
+                onChange={(value) => setProfile({ ...profile, effort: value })}
+                onImageUpload={(e) => handleContentImageUpload(e, 'effort')}
+                uploadingImage={uploadingImage}
+              />
 
-              {/* やりたいこと */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-dark">27卒でやりたいこと</label>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewField(previewField === 'goals' ? null : 'goals')}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {previewField === 'goals' ? 'プレビューを閉じる' : 'プレビュー'}
-                  </button>
-                </div>
-                <textarea
-                  value={profile.goals || ''}
-                  onChange={(e) => setProfile({ ...profile, goals: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                {previewField === 'goals' && profile.goals && (
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">プレビュー:</p>
-                    <div className="text-dark leading-relaxed" dangerouslySetInnerHTML={{ __html: formatText(profile.goals) }} />
-                  </div>
-                )}
-              </div>
+              <RichTextArea
+                label="27卒でやりたいこと"
+                value={profile.goals || ''}
+                onChange={(value) => setProfile({ ...profile, goals: value })}
+                onImageUpload={(e) => handleContentImageUpload(e, 'goals')}
+                uploadingImage={uploadingImage}
+              />
 
-              {/* 趣味 */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-dark">ハマってる趣味</label>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewField(previewField === 'hobbies' ? null : 'hobbies')}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {previewField === 'hobbies' ? 'プレビューを閉じる' : 'プレビュー'}
-                  </button>
-                </div>
-                <textarea
-                  value={profile.hobbies || ''}
-                  onChange={(e) => setProfile({ ...profile, hobbies: e.target.value })}
-                  rows={2}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                {previewField === 'hobbies' && profile.hobbies && (
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">プレビュー:</p>
-                    <div className="text-dark leading-relaxed" dangerouslySetInnerHTML={{ __html: formatText(profile.hobbies) }} />
-                  </div>
-                )}
-              </div>
+              <RichTextArea
+                label="ハマってる趣味"
+                value={profile.hobbies || ''}
+                onChange={(value) => setProfile({ ...profile, hobbies: value })}
+                rows={3}
+                onImageUpload={(e) => handleContentImageUpload(e, 'hobbies')}
+                uploadingImage={uploadingImage}
+              />
 
-              {/* CAに決めた理由 */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-medium text-dark">CAに決めた理由</label>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewField(previewField === 'reason_for_ca' ? null : 'reason_for_ca')}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    {previewField === 'reason_for_ca' ? 'プレビューを閉じる' : 'プレビュー'}
-                  </button>
-                </div>
-                <textarea
-                  value={profile.reason_for_ca || ''}
-                  onChange={(e) => setProfile({ ...profile, reason_for_ca: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                {previewField === 'reason_for_ca' && profile.reason_for_ca && (
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">プレビュー:</p>
-                    <div className="text-dark leading-relaxed" dangerouslySetInnerHTML={{ __html: formatText(profile.reason_for_ca) }} />
-                  </div>
-                )}
-              </div>
+              <RichTextArea
+                label="CAに決めた理由"
+                value={profile.reason_for_ca || ''}
+                onChange={(value) => setProfile({ ...profile, reason_for_ca: value })}
+                onImageUpload={(e) => handleContentImageUpload(e, 'reason_for_ca')}
+                uploadingImage={uploadingImage}
+              />
             </div>
           </div>
 
@@ -523,6 +639,16 @@ export default function EditProfile() {
                   onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, github: e.target.value } })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="https://github.com/username"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">その他（ブログ、ポートフォリオなど）</label>
+                <input
+                  type="url"
+                  value={profile.sns_links?.other || ''}
+                  onChange={(e) => setProfile({ ...profile, sns_links: { ...profile.sns_links, other: e.target.value } })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="https://..."
                 />
               </div>
             </div>

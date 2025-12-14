@@ -4,48 +4,90 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import { Profile } from '@/lib/types'
+import { Profile, PostWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
+import { MBTI_TYPES } from '@/lib/constants'
+import NewsCard from '@/components/NewsCard'
 
 export default function ProfileDetail() {
   const params = useParams()
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [posts, setPosts] = useState<PostWithAuthor[]>([])
   const [loading, setLoading] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
 
   useEffect(() => {
-    async function fetchProfile() {
-      const { data, error } = await supabase
+    async function fetchData() {
+      // プロフィール取得
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', params.id)
         .single()
 
-      if (error || !data) {
+      if (profileError || !profileData) {
         router.push('/')
         return
       }
 
-      setProfile(data)
+      setProfile(profileData)
 
       const userStr = localStorage.getItem('user')
       if (userStr) {
         const user = JSON.parse(userStr)
-        setIsOwner(user.id === data.user_id)
+        setIsOwner(user.id === profileData.user_id)
+      }
+
+      // この人の投稿を取得（最新3件）
+      const { data: postsData } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', profileData.user_id)
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      if (postsData) {
+        const postsWithAuthor = postsData.map(post => ({
+          ...post,
+          author: {
+            name: profileData.name,
+            photo_url: profileData.photo_url
+          }
+        }))
+        setPosts(postsWithAuthor)
       }
 
       setLoading(false)
     }
 
-    fetchProfile()
+    fetchData()
   }, [params.id, router])
+
+  // マークダウンをHTMLに変換（画像対応）
+  const renderContent = (text: string) => {
+    if (!text) return ''
+    let html = text
+    // 画像
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-4 rounded-lg max-w-full" />')
+    // 見出し
+    html = html.replace(/^### (.+)$/gm, '<h3 class="text-base font-bold text-dark mt-4 mb-1">$1</h3>')
+    html = html.replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold text-dark mt-4 mb-2">$1</h2>')
+    // リスト
+    html = html.replace(/^- (.+)$/gm, '<li class="ml-4">• $1</li>')
+    // テキスト装飾
+    html = formatText(html)
+    return html
+  }
 
   if (loading) {
     return (
       <main className="min-h-screen bg-cream">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <p className="text-center text-gray-500">読み込み中...</p>
+          <div className="text-center py-20">
+            <div className="inline-block w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-6 text-gray-500">読み込み中...</p>
+          </div>
         </div>
       </main>
     )
@@ -56,7 +98,7 @@ export default function ProfileDetail() {
   }
 
   const hasSnsLinks = profile.sns_links && 
-    (profile.sns_links.twitter || profile.sns_links.instagram || profile.sns_links.github || profile.sns_links.facebook)
+    (profile.sns_links.twitter || profile.sns_links.instagram || profile.sns_links.github || profile.sns_links.facebook || profile.sns_links.other)
 
   return (
     <main className="min-h-screen bg-cream">
@@ -95,7 +137,14 @@ export default function ProfileDetail() {
                       ))}
                     </div>
                   )}
-                  <h1 className="text-3xl font-bold text-dark mb-4">{profile.name}</h1>
+                  <h1 className="text-3xl font-bold text-dark mb-2">{profile.name}</h1>
+                  
+                  {/* MBTI バッジ */}
+                  {profile.mbti && MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES] && (
+                    <span className={`inline-block px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].color} rounded-full text-sm font-medium mb-4`}>
+                      {MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].label}
+                    </span>
+                  )}
                 </div>
                 {isOwner && (
                   <Link
@@ -108,7 +157,7 @@ export default function ProfileDetail() {
               </div>
 
               {profile.tags && profile.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {profile.tags.map((tag) => (
                     <span
                       key={tag}
@@ -130,7 +179,7 @@ export default function ProfileDetail() {
                 <h2 className="text-lg font-bold text-primary mb-3">■ これまでの経歴</h2>
                 <div 
                   className="text-dark leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: formatText(profile.career) }}
+                  dangerouslySetInnerHTML={{ __html: renderContent(profile.career) }}
                 />
               </div>
             )}
@@ -140,7 +189,7 @@ export default function ProfileDetail() {
                 <h2 className="text-lg font-bold text-primary mb-3">■ 人生で頑張ったこと</h2>
                 <div 
                   className="text-dark leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: formatText(profile.effort) }}
+                  dangerouslySetInnerHTML={{ __html: renderContent(profile.effort) }}
                 />
               </div>
             )}
@@ -150,7 +199,7 @@ export default function ProfileDetail() {
                 <h2 className="text-lg font-bold text-primary mb-3">■ 27卒でやりたいこと</h2>
                 <div 
                   className="text-dark leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: formatText(profile.goals) }}
+                  dangerouslySetInnerHTML={{ __html: renderContent(profile.goals) }}
                 />
               </div>
             )}
@@ -160,7 +209,7 @@ export default function ProfileDetail() {
                 <h2 className="text-lg font-bold text-primary mb-3">■ ハマってる趣味</h2>
                 <div 
                   className="text-dark leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: formatText(profile.hobbies) }}
+                  dangerouslySetInnerHTML={{ __html: renderContent(profile.hobbies) }}
                 />
               </div>
             )}
@@ -170,7 +219,7 @@ export default function ProfileDetail() {
                 <h2 className="text-lg font-bold text-primary mb-3">■ CAに決めた理由</h2>
                 <div 
                   className="text-dark leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: formatText(profile.reason_for_ca) }}
+                  dangerouslySetInnerHTML={{ __html: renderContent(profile.reason_for_ca) }}
                 />
               </div>
             )}
@@ -199,11 +248,46 @@ export default function ProfileDetail() {
                       GitHub
                     </a>
                   )}
+                  {profile.sns_links?.other && (
+                    <a href={profile.sns_links.other} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
+                      その他
+                    </a>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* 関連投稿セクション */}
+        {posts.length > 0 && (
+          <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-dark">📝 {profile.name}さんの投稿</h2>
+              <Link href={`/posts?user=${profile.user_id}`} className="text-primary text-sm font-medium hover:underline">
+                すべて見る →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {posts.map((post) => (
+                <NewsCard key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 自分のプロフィールの場合、投稿ボタンを表示 */}
+        {isOwner && posts.length === 0 && (
+          <div className="mt-8 bg-white rounded-xl shadow-lg p-6 text-center">
+            <p className="text-gray-500 mb-4">まだ投稿がありません</p>
+            <Link
+              href="/posts/new"
+              className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-full hover:bg-secondary transition"
+            >
+              ＋ 記事を投稿する
+            </Link>
+          </div>
+        )}
 
         <div className="h-16"></div>
       </div>

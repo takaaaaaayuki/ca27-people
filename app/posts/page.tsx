@@ -11,10 +11,19 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'blog' | 'event' | 'news' | 'official'>('all')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
-    setIsLoggedIn(!!userStr)
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      setUserId(user.id)
+      setIsLoggedIn(true)
+    }
+    const adminFlag = localStorage.getItem('isAdmin')
+    setIsAdmin(adminFlag === 'true')
+    
     fetchPosts()
   }, [])
 
@@ -56,6 +65,23 @@ export default function PostsPage() {
     }
 
     setLoading(false)
+  }
+
+  async function handleDelete(postId: string, postTitle: string) {
+    const confirmed = window.confirm(`「${postTitle}」を削除しますか？`)
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId)
+
+    if (error) {
+      alert('削除に失敗しました')
+      console.error(error)
+    } else {
+      setPosts(posts.filter(p => p.id !== postId))
+    }
   }
 
   const filteredPosts = posts.filter(post => {
@@ -132,9 +158,25 @@ export default function PostsPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-50">
             {filteredPosts.map((post) => (
-              <NewsCard key={post.id} post={post} />
+              <div key={post.id} className="relative group">
+                <NewsCard post={post} />
+                {/* 削除ボタン（管理者または投稿者のみ） */}
+                {(isAdmin || userId === post.user_id) && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleDelete(post.id, post.title)
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600 z-10"
+                    title="削除"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}

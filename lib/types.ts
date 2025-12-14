@@ -20,9 +20,11 @@ export type Profile = {
     instagram?: string
     github?: string
     facebook?: string
+    other?: string
   }
   tags: string[]
   role: 'business' | 'engineer' | 'designer' | null
+  mbti: string | null
   created_at: string
   updated_at: string
 }
@@ -72,6 +74,50 @@ export type Post = {
 
 export type PostWithAuthor = Post & {
   author: {
+    name: string
+    photo_url: string | null
+  } | null
+}
+
+export type PostLike = {
+  id: string
+  post_id: string
+  user_id: string
+  created_at: string
+}
+
+export type PostComment = {
+  id: string
+  post_id: string
+  user_id: string
+  content: string
+  created_at: string
+}
+
+export type CommentWithAuthor = PostComment & {
+  author: {
+    id: string
+    name: string
+    photo_url: string | null
+  } | null
+}
+
+export type Notification = {
+  id: string
+  user_id: string
+  type: 'like' | 'comment' | 'event_reminder' | 'system'
+  title: string
+  message: string | null
+  link: string | null
+  is_read: boolean
+  related_user_id: string | null
+  related_post_id: string | null
+  related_event_id: string | null
+  created_at: string
+}
+
+export type NotificationWithUser = Notification & {
+  related_user: {
     name: string
     photo_url: string | null
   } | null

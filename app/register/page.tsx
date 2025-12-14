@@ -10,8 +10,17 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const hashPassword = async (password: string) => {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(password)
+    const hash = await crypto.subtle.digest('SHA-256', data)
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,120 +39,131 @@ export default function Register() {
     setLoading(true)
 
     try {
-      const encoder = new TextEncoder()
-      const data = encoder.encode(password)
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+      const passwordHash = await hashPassword(password)
 
-      const { data: userData, error: userError } = await supabase
+      // メールアドレスの重複チェック
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (existingUser) {
+        setError('このメールアドレスは既に登録されています')
+        setLoading(false)
+        return
+      }
+
+      // ユーザー作成
+      const { data: newUser, error: userError } = await supabase
         .from('users')
         .insert([{ email, password_hash: passwordHash }])
         .select()
         .single()
 
-      if (userError) {
-        if (userError.code === '23505') {
-          setError('このメールアドレスは既に登録されています')
-        } else {
-          setError('登録に失敗しました')
-        }
+      if (userError || !newUser) {
+        setError('登録に失敗しました')
         setLoading(false)
         return
       }
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{ user_id: userData.id, name: 'New Member' }])
+      // プロフィール作成
+      await supabase.from('profiles').insert([
+        {
+          user_id: newUser.id,
+          name: 'New Member',
+          tags: [],
+          role: 'business',
+        },
+      ])
 
-      if (profileError) {
-        setError('プロフィールの作成に失敗しました')
-        setLoading(false)
-        return
-      }
+      // ログイン状態を保存（isAdminは設定しない = 一般ユーザー）
+      localStorage.setItem('user', JSON.stringify(newUser))
+      // isAdminを明示的に削除（念のため）
+      localStorage.removeItem('isAdmin')
 
-      localStorage.setItem('user', JSON.stringify(userData))
       router.push('/profile/edit')
     } catch (err) {
       setError('エラーが発生しました')
-      setLoading(false)
     }
+
+    setLoading(false)
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-cream to-white flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md animate-fadeIn">
-        <div className="text-center mb-10">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-            <span className="text-white font-display text-3xl">C</span>
+    <main className="min-h-screen bg-cream flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-dark">新規登録</h1>
+            <p className="text-gray-500 mt-2">CA27 Peopleへようこそ</p>
           </div>
-          <h1 className="text-3xl font-display text-dark">新規登録</h1>
-        </div>
 
-        <form onSubmit={handleSubmit} className="bg-white p-10 rounded-3xl shadow-xl">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-body">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
               {error}
             </div>
           )}
 
-          <div className="mb-6">
-            <label className="block text-sm font-display text-dark mb-2">
-              メールアドレス
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-5 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-body transition-all duration-300"
-              placeholder="example@email.com"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-dark mb-2">
+                メールアドレス
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="example@email.com"
+              />
+            </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-display text-dark mb-2">
-              パスワード
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-5 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-body transition-all duration-300"
-              placeholder="6文字以上"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-dark mb-2">
+                パスワード
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="6文字以上"
+              />
+            </div>
 
-          <div className="mb-8">
-            <label className="block text-sm font-display text-dark mb-2">
-              パスワード（確認）
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full px-5 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-body transition-all duration-300"
-              placeholder="もう一度入力"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-dark mb-2">
+                パスワード（確認）
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="もう一度入力"
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-display text-lg rounded-xl hover:shadow-lg hover:scale-[1.02] transform transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            {loading ? '登録中...' : '登録する'}
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-primary text-white font-medium rounded-lg hover:bg-secondary transition disabled:bg-gray-400"
+            >
+              {loading ? '登録中...' : '登録する'}
+            </button>
+          </form>
 
-          <p className="mt-8 text-center text-sm text-gray-500 font-body">
-            すでにアカウントをお持ちの方は
-            <Link href="/login" className="text-primary font-medium hover:underline ml-1">
+          <p className="mt-6 text-center text-gray-500 text-sm">
+            既にアカウントをお持ちですか？{' '}
+            <Link href="/login" className="text-primary hover:underline">
               ログイン
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </main>
   )

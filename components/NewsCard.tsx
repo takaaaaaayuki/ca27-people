@@ -25,63 +25,57 @@ export default function NewsCard({ post }: Props) {
 
   const typeInfo = getTypeLabel(post.post_type, post.is_official)
 
-  const CardContent = () => (
-    <div className="flex-shrink-0 w-72 bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group">
-      {/* サムネイル */}
-      <div className="aspect-[16/9] bg-cream overflow-hidden relative">
-        {post.thumbnail_url ? (
-          <img
-            src={post.thumbnail_url}
-            alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
-            <span className="text-4xl">📝</span>
-          </div>
-        )}
-        {/* タイプバッジ */}
-        <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-bold rounded ${typeInfo.color}`}>
-          {typeInfo.label}
-        </span>
-      </div>
-
-      {/* 内容 */}
-      <div className="p-4">
-        <p className="text-xs text-gray-400 mb-1">{formatDate(post.created_at)}</p>
-        <h3 className="font-bold text-dark text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-          {post.title}
-        </h3>
-        {post.content && (
-          <p className="text-xs text-gray-500 line-clamp-2 mb-3">{post.content}</p>
-        )}
-        {post.author && (
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-cream overflow-hidden">
-              {post.author.photo_url ? (
-                <img src={post.author.photo_url} alt={post.author.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">👤</div>
-              )}
-            </div>
-            <span className="text-xs text-gray-500">{post.author.name}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  if (post.external_url) {
-    return (
-      <a href={post.external_url} target="_blank" rel="noopener noreferrer">
-        <CardContent />
-      </a>
-    )
-  }
-
   return (
     <Link href={`/posts/${post.id}`}>
-      <CardContent />
+      <div className="flex-shrink-0 w-72 bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group">
+        {/* サムネイル */}
+        <div className="aspect-[16/9] bg-cream overflow-hidden relative">
+          {post.thumbnail_url ? (
+            <img
+              src={post.thumbnail_url}
+              alt={post.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
+              <span className="text-4xl">📝</span>
+            </div>
+          )}
+          {/* タイプバッジ */}
+          <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-bold rounded ${typeInfo.color}`}>
+            {typeInfo.label}
+          </span>
+          {/* 外部リンクアイコン */}
+          {post.external_url && (
+            <span className="absolute top-2 right-2 px-2 py-1 bg-white/90 text-xs rounded">
+              🔗
+            </span>
+          )}
+        </div>
+
+        {/* 内容 */}
+        <div className="p-4">
+          <p className="text-xs text-gray-400 mb-1">{formatDate(post.created_at)}</p>
+          <h3 className="font-bold text-dark text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+            {post.title}
+          </h3>
+          {post.content && (
+            <p className="text-xs text-gray-500 line-clamp-2 mb-3">{post.content}</p>
+          )}
+          {post.author && (
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-cream overflow-hidden">
+                {post.author.photo_url ? (
+                  <img src={post.author.photo_url} alt={post.author.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">👤</div>
+                )}
+              </div>
+              <span className="text-xs text-gray-500">{post.author.name}</span>
+            </div>
+          )}
+        </div>
+      </div>
     </Link>
   )
 }

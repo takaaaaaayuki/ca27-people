@@ -119,3 +119,28 @@ Object.entries(DEPARTMENT_OPTIONS).forEach(([category, divisions]) => {
     })
   })
 })
+
+export const MBTI_TYPES = {
+  // 分析家
+  'INTJ': { label: 'INTJ - 建築家', group: '分析家', color: 'bg-purple-200' },
+  'INTP': { label: 'INTP - 論理学者', group: '分析家', color: 'bg-purple-200' },
+  'ENTJ': { label: 'ENTJ - 指揮官', group: '分析家', color: 'bg-purple-200' },
+  'ENTP': { label: 'ENTP - 討論者', group: '分析家', color: 'bg-purple-200' },
+  // 外交官
+  'INFJ': { label: 'INFJ - 提唱者', group: '外交官', color: 'bg-green-200' },
+  'INFP': { label: 'INFP - 仲介者', group: '外交官', color: 'bg-green-200' },
+  'ENFJ': { label: 'ENFJ - 主人公', group: '外交官', color: 'bg-green-200' },
+  'ENFP': { label: 'ENFP - 運動家', group: '外交官', color: 'bg-green-200' },
+  // 番人
+  'ISTJ': { label: 'ISTJ - 管理者', group: '番人', color: 'bg-blue-200' },
+  'ISFJ': { label: 'ISFJ - 擁護者', group: '番人', color: 'bg-blue-200' },
+  'ESTJ': { label: 'ESTJ - 幹部', group: '番人', color: 'bg-blue-200' },
+  'ESFJ': { label: 'ESFJ - 領事', group: '番人', color: 'bg-blue-200' },
+  // 探検家
+  'ISTP': { label: 'ISTP - 巨匠', group: '探検家', color: 'bg-yellow-200' },
+  'ISFP': { label: 'ISFP - 冒険家', group: '探検家', color: 'bg-yellow-200' },
+  'ESTP': { label: 'ESTP - 起業家', group: '探検家', color: 'bg-yellow-200' },
+  'ESFP': { label: 'ESFP - エンターテイナー', group: '探検家', color: 'bg-yellow-200' },
+} as const
+
+export type MBTIKey = keyof typeof MBTI_TYPES
