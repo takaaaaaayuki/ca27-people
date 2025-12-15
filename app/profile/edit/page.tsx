@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Bold, Type, List, Image, Eye, Edit3, X, ChevronDown, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
 import { DEPARTMENT_OPTIONS, ROLES, MBTI_TYPES } from '@/lib/constants'
 import { formatText } from '@/lib/textFormatter'
 
-// ツールバー付きテキストエリアコンポーネント
 function RichTextArea({
   label,
   value,
@@ -62,9 +62,9 @@ function RichTextArea({
         <button
           type="button"
           onClick={() => setShowPreview(!showPreview)}
-          className="text-xs text-primary hover:underline"
+          className="flex items-center gap-1 text-xs text-primary hover:underline"
         >
-          {showPreview ? '✏️ 編集' : '👁️ プレビュー'}
+          {showPreview ? <><Edit3 size={14} /> 編集</> : <><Eye size={14} /> プレビュー</>}
         </button>
       </div>
 
@@ -73,15 +73,17 @@ function RichTextArea({
           <button
             type="button"
             onClick={() => insertFormatting('## ', '', '見出し')}
-            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100"
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 flex items-center gap-1"
           >
+            <Type size={14} />
             見出し
           </button>
           <button
             type="button"
             onClick={() => insertFormatting('**', '**', 'テキスト')}
-            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 font-bold"
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 font-bold flex items-center gap-1"
           >
+            <Bold size={14} />
             B
           </button>
           <button
@@ -101,13 +103,15 @@ function RichTextArea({
           <button
             type="button"
             onClick={() => insertFormatting('- ', '', 'リスト')}
-            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100"
+            className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 flex items-center gap-1"
           >
-            • リスト
+            <List size={14} />
+            リスト
           </button>
           {onImageUpload && (
-            <label className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 cursor-pointer">
-              📷 画像
+            <label className="px-2 py-1 bg-white border border-gray-200 rounded text-xs hover:bg-gray-100 cursor-pointer flex items-center gap-1">
+              <Image size={14} />
+              画像
               <input
                 type="file"
                 accept="image/*"
@@ -211,7 +215,6 @@ export default function EditProfile() {
     }
   }
 
-  // テキストエリア内の画像アップロード
   const handleContentImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     field: 'career' | 'effort' | 'goals' | 'hobbies' | 'reason_for_ca'
@@ -351,7 +354,6 @@ export default function EditProfile() {
     )
   }
 
-  // MBTIをグループ別に整理
   const mbtiGroups = Object.entries(MBTI_TYPES).reduce((acc, [key, value]) => {
     if (!acc[value.group]) acc[value.group] = []
     acc[value.group].push({ key, ...value })
@@ -368,17 +370,16 @@ export default function EditProfile() {
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 写真 */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">プロフィール写真</h2>
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-cream overflow-hidden shadow-md">
+              <div className="w-24 h-24 rounded-full bg-cream overflow-hidden shadow-md flex items-center justify-center">
                 {previewUrl ? (
                   <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">
-                    👤
-                  </div>
+                  <span className="text-gray-300 text-3xl">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </span>
                 )}
               </div>
               <div>
@@ -393,7 +394,6 @@ export default function EditProfile() {
             </div>
           </div>
 
-          {/* 基本情報 */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">基本情報</h2>
             <div className="space-y-4">
@@ -408,7 +408,6 @@ export default function EditProfile() {
                 />
               </div>
 
-              {/* 職種 */}
               <div>
                 <label className="block text-sm font-medium text-dark mb-2">職種 *</label>
                 <div className="flex gap-3">
@@ -429,7 +428,6 @@ export default function EditProfile() {
                 </div>
               </div>
 
-              {/* MBTI */}
               <div>
                 <label className="block text-sm font-medium text-dark mb-2">MBTI</label>
                 
@@ -438,7 +436,7 @@ export default function EditProfile() {
                     <span className={`inline-flex items-center gap-1 px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES]?.color || 'bg-gray-100'} rounded-full text-sm font-medium`}>
                       {MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES]?.label || profile.mbti}
                       <button type="button" onClick={() => setProfile({ ...profile, mbti: null })} className="text-gray-500 hover:text-gray-700">
-                        ×
+                        <X size={14} />
                       </button>
                     </span>
                   </div>
@@ -447,9 +445,10 @@ export default function EditProfile() {
                 <button
                   type="button"
                   onClick={() => setShowMbtiSelector(!showMbtiSelector)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left text-gray-500 hover:border-primary transition"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left text-gray-500 hover:border-primary transition flex items-center justify-between"
                 >
-                  {showMbtiSelector ? '閉じる' : 'MBTIを選択...'}
+                  <span>{showMbtiSelector ? '閉じる' : 'MBTIを選択...'}</span>
+                  <ChevronDown size={18} className={`transition-transform ${showMbtiSelector ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showMbtiSelector && (
@@ -482,7 +481,6 @@ export default function EditProfile() {
                 )}
               </div>
               
-              {/* 興味のある事業部（複数選択） */}
               <div>
                 <label className="block text-sm font-medium text-dark mb-2">興味のある事業部（複数選択可）</label>
                 
@@ -491,7 +489,7 @@ export default function EditProfile() {
                     <span key={dept} className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                       {dept}
                       <button type="button" onClick={() => handleRemoveDept(dept)} className="text-primary/60 hover:text-primary">
-                        ×
+                        <X size={14} />
                       </button>
                     </span>
                   ))}
@@ -500,9 +498,10 @@ export default function EditProfile() {
                 <button
                   type="button"
                   onClick={() => setShowDeptSelector(!showDeptSelector)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left text-gray-500 hover:border-primary transition"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-left text-gray-500 hover:border-primary transition flex items-center justify-between"
                 >
-                  {showDeptSelector ? '閉じる' : '事業部を選択...'}
+                  <span>{showDeptSelector ? '閉じる' : '事業部を選択...'}</span>
+                  <ChevronDown size={18} className={`transition-transform ${showDeptSelector ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showDeptSelector && (
@@ -548,10 +547,12 @@ export default function EditProfile() {
             </div>
           </div>
 
-          {/* 自己紹介 */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">自己紹介</h2>
-            <p className="text-xs text-gray-500 mb-4">📷 ボタンで画像を追加できます</p>
+            <p className="text-xs text-gray-500 mb-4 flex items-center gap-1">
+              <Image size={14} />
+              <span>ボタンで画像を追加できます</span>
+            </p>
             <div className="space-y-6">
               <RichTextArea
                 label="これまでの経歴（学校・サークル・部活）"
@@ -597,7 +598,6 @@ export default function EditProfile() {
             </div>
           </div>
 
-          {/* SNSリンク */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">SNSリンク</h2>
             <div className="space-y-4">
@@ -654,7 +654,6 @@ export default function EditProfile() {
             </div>
           </div>
 
-          {/* タグ */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">自分を表すタグ</h2>
             <div className="flex gap-2 mb-4">
@@ -669,8 +668,9 @@ export default function EditProfile() {
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="px-6 py-3 bg-cream text-primary font-medium rounded-lg hover:bg-secondary/20 transition"
+                className="px-6 py-3 bg-cream text-primary font-medium rounded-lg hover:bg-secondary/20 transition flex items-center gap-1"
               >
+                <Plus size={18} />
                 追加
               </button>
             </div>
@@ -679,14 +679,13 @@ export default function EditProfile() {
                 <span key={tag} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/20 text-primary rounded-full">
                   {tag}
                   <button type="button" onClick={() => handleRemoveTag(tag)} className="text-primary/60 hover:text-primary">
-                    ×
+                    <X size={14} />
                   </button>
                 </span>
               ))}
             </div>
           </div>
 
-          {/* 送信ボタン */}
           <div className="flex gap-4">
             <button
               type="submit"

@@ -2,18 +2,34 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { LogOut, UserPen, LogIn, UserPlus } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 export default function Header() {
   const router = useRouter()
+  const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
+  // pathnameが変わるたびにログイン状態を再チェック
   useEffect(() => {
-    const userStr = localStorage.getItem('user')
-    setIsLoggedIn(!!userStr)
+    const checkLoginStatus = () => {
+      const userStr = localStorage.getItem('user')
+      setIsLoggedIn(!!userStr)
+    }
 
+    checkLoginStatus()
+
+    // storageイベントでも更新（別タブでの変更を検知）
+    window.addEventListener('storage', checkLoginStatus)
+    
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus)
+    }
+  }, [pathname])
+
+  useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
     }
@@ -27,7 +43,6 @@ export default function Header() {
     localStorage.removeItem('isAdmin')
     setIsLoggedIn(false)
     router.push('/')
-    window.location.reload()
   }
 
   return (
@@ -62,30 +77,34 @@ export default function Header() {
               <NotificationBell />
               <Link
                 href="/profile/edit"
-                className="px-4 py-2 text-dark font-medium hover:text-primary transition-colors duration-300"
+                className="px-4 py-2 text-dark font-medium hover:text-primary transition-colors duration-300 flex items-center gap-1"
               >
-                プロフィール編集
+                <UserPen size={18} />
+                <span className="hidden sm:inline">プロフィール編集</span>
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-5 py-2.5 bg-cream text-dark font-medium rounded-full hover:bg-gray-200 transition-all duration-300"
+                className="px-5 py-2.5 bg-cream text-dark font-medium rounded-full hover:bg-gray-200 transition-all duration-300 flex items-center gap-1"
               >
-                ログアウト
+                <LogOut size={18} />
+                <span className="hidden sm:inline">ログアウト</span>
               </button>
             </>
           ) : (
             <>
               <Link
                 href="/login"
-                className="px-4 py-2 text-dark font-medium hover:text-primary transition-colors duration-300"
+                className="px-4 py-2 text-dark font-medium hover:text-primary transition-colors duration-300 flex items-center gap-1"
               >
-                ログイン
+                <LogIn size={18} />
+                <span>ログイン</span>
               </Link>
               <Link
                 href="/register"
-                className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-full hover:shadow-lg hover:scale-105 transform transition-all duration-300"
+                className="px-6 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-medium rounded-full hover:shadow-lg hover:scale-105 transform transition-all duration-300 flex items-center gap-1"
               >
-                新規登録
+                <UserPlus size={18} />
+                <span>新規登録</span>
               </Link>
             </>
           )}

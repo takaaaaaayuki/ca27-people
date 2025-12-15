@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Link as LinkIcon, FileText, User } from 'lucide-react'
 import { PostWithAuthor } from '@/lib/types'
 
 type Props = {
@@ -28,7 +29,6 @@ export default function NewsCard({ post }: Props) {
   return (
     <Link href={`/posts/${post.id}`}>
       <div className="flex-shrink-0 w-72 bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group">
-        {/* サムネイル */}
         <div className="aspect-[16/9] bg-cream overflow-hidden relative">
           {post.thumbnail_url ? (
             <img
@@ -38,22 +38,19 @@ export default function NewsCard({ post }: Props) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
-              <span className="text-4xl">📝</span>
+              <FileText size={40} className="text-primary/50" />
             </div>
           )}
-          {/* タイプバッジ */}
           <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-bold rounded ${typeInfo.color}`}>
             {typeInfo.label}
           </span>
-          {/* 外部リンクアイコン */}
           {post.external_url && (
-            <span className="absolute top-2 right-2 px-2 py-1 bg-white/90 text-xs rounded">
-              🔗
+            <span className="absolute top-2 right-2 p-1.5 bg-white/90 rounded">
+              <LinkIcon size={14} className="text-gray-600" />
             </span>
           )}
         </div>
 
-        {/* 内容 */}
         <div className="p-4">
           <p className="text-xs text-gray-400 mb-1">{formatDate(post.created_at)}</p>
           <h3 className="font-bold text-dark text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
@@ -64,11 +61,11 @@ export default function NewsCard({ post }: Props) {
           )}
           {post.author && (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-cream overflow-hidden">
+              <div className="w-6 h-6 rounded-full bg-cream overflow-hidden flex items-center justify-center">
                 {post.author.photo_url ? (
                   <img src={post.author.photo_url} alt={post.author.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">👤</div>
+                  <User size={14} className="text-gray-300" />
                 )}
               </div>
               <span className="text-xs text-gray-500">{post.author.name}</span>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Search, Building2, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile, PostWithAuthor } from '@/lib/types'
 import ProfileCard from '@/components/ProfileCard'
@@ -134,9 +135,7 @@ export default function Home() {
         <div className="bg-white py-8 border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-dark flex items-center gap-2">
-                📰 ニュース & ブログ
-              </h2>
+              <h2 className="text-xl font-bold text-dark">ニュース & ブログ</h2>
               <Link href="/posts" className="text-primary text-sm font-medium hover:underline">
                 すべて見る →
               </Link>
@@ -184,13 +183,14 @@ export default function Home() {
 
           <div className="flex flex-col md:flex-row gap-4">
             {/* テキスト検索 */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="名前やタグで検索..."
-                className="w-full px-5 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-12 pr-5 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
@@ -204,7 +204,7 @@ export default function Home() {
                     : 'border-gray-200 text-gray-600 hover:border-primary'
                 }`}
               >
-                <span>🏢</span>
+                <Building2 size={18} />
                 <span>{selectedDepartment || '事業部で絞り込み'}</span>
                 <span className="ml-2">▼</span>
               </button>
@@ -277,13 +277,17 @@ export default function Home() {
               {searchText && (
                 <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
                   検索: {searchText}
-                  <button onClick={() => setSearchText('')} className="text-gray-400 hover:text-gray-600">×</button>
+                  <button onClick={() => setSearchText('')} className="text-gray-400 hover:text-gray-600">
+                    <X size={14} />
+                  </button>
                 </span>
               )}
               {selectedDepartment && (
                 <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                   {selectedDepartment}
-                  <button onClick={() => setSelectedDepartment('')} className="text-primary/60 hover:text-primary">×</button>
+                  <button onClick={() => setSelectedDepartment('')} className="text-primary/60 hover:text-primary">
+                    <X size={14} />
+                  </button>
                 </span>
               )}
             </div>
@@ -306,7 +310,7 @@ export default function Home() {
         ) : filteredProfiles.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
             <div className="w-20 h-20 bg-cream rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">🔍</span>
+              <Search size={32} className="text-gray-400" />
             </div>
             <p className="text-gray-600 text-lg mb-2">該当するプロフィールが見つかりません</p>
             <p className="text-gray-400">検索条件を変更してみてください</p>

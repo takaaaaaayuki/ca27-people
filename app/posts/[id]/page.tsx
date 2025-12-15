@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Heart, MessageCircle, Trash2, User, Link as LinkIcon, AlertCircle, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Post, CommentWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
@@ -287,7 +288,7 @@ export default function PostDetailPage() {
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="text-center py-20 bg-white rounded-xl shadow-sm">
             <div className="w-20 h-20 bg-cream rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-4xl">😢</span>
+              <AlertCircle size={40} className="text-gray-400" />
             </div>
             <p className="text-gray-600 text-lg mb-4">記事が見つかりませんでした</p>
             <Link href="/posts" className="inline-block px-6 py-3 bg-primary text-white rounded-full hover:bg-secondary transition">
@@ -311,8 +312,9 @@ export default function PostDetailPage() {
       )}
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <Link href="/posts" className="inline-block text-primary hover:underline mb-6">
-          ← 記事一覧に戻る
+        <Link href="/posts" className="inline-flex items-center gap-1 text-primary hover:underline mb-6">
+          <ArrowLeft size={18} />
+          <span>記事一覧に戻る</span>
         </Link>
 
         <article className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -328,11 +330,11 @@ export default function PostDetailPage() {
 
             {post.author && (
               <Link href={`/profile/${post.author.id}`} className="flex items-center gap-3 mb-6 hover:opacity-80 transition">
-                <div className="w-12 h-12 rounded-full bg-cream overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-cream overflow-hidden flex items-center justify-center">
                   {post.author.photo_url ? (
                     <img src={post.author.photo_url} alt={post.author.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">👤</div>
+                    <User size={24} className="text-gray-300" />
                   )}
                 </div>
                 <div>
@@ -350,7 +352,7 @@ export default function PostDetailPage() {
                   isLiked ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                <span className="text-lg">{isLiked ? '❤️' : '🤍'}</span>
+                <Heart size={18} className={isLiked ? 'fill-current' : ''} />
                 <span>いいね</span>
                 <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">{likeCount}</span>
               </button>
@@ -363,7 +365,10 @@ export default function PostDetailPage() {
 
             {post.external_url && (
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500 mb-2">🔗 関連リンク</p>
+                <p className="text-sm text-gray-500 mb-2 flex items-center gap-1">
+                  <LinkIcon size={14} />
+                  <span>関連リンク</span>
+                </p>
                 <a href={post.external_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
                   {post.external_url}
                 </a>
@@ -373,8 +378,9 @@ export default function PostDetailPage() {
 
           {canDeletePost && (
             <div className="px-8 py-4 bg-gray-50 border-t border-gray-100">
-              <button onClick={handleDeletePost} className="px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition">
-                この記事を削除
+              <button onClick={handleDeletePost} className="flex items-center gap-1 px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition">
+                <Trash2 size={16} />
+                <span>この記事を削除</span>
               </button>
             </div>
           )}
@@ -382,7 +388,10 @@ export default function PostDetailPage() {
 
         <div className="mt-8 bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-100">
-            <h2 className="text-xl font-bold text-dark">💬 コメント ({comments.length})</h2>
+            <h2 className="text-xl font-bold text-dark flex items-center gap-2">
+              <MessageCircle size={22} />
+              <span>コメント ({comments.length})</span>
+            </h2>
           </div>
 
           <div className="divide-y divide-gray-100">
@@ -396,16 +405,18 @@ export default function PostDetailPage() {
                     <div className="flex items-start gap-3">
                       {comment.author ? (
                         <Link href={`/profile/${comment.author.id}`} className="flex-shrink-0">
-                          <div className="w-10 h-10 rounded-full bg-cream overflow-hidden">
+                          <div className="w-10 h-10 rounded-full bg-cream overflow-hidden flex items-center justify-center">
                             {comment.author.photo_url ? (
                               <img src={comment.author.photo_url} alt={comment.author.name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">👤</div>
+                              <User size={20} className="text-gray-300" />
                             )}
                           </div>
                         </Link>
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-cream flex items-center justify-center text-gray-300">👤</div>
+                        <div className="w-10 h-10 rounded-full bg-cream flex items-center justify-center">
+                          <User size={20} className="text-gray-300" />
+                        </div>
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -415,8 +426,8 @@ export default function PostDetailPage() {
                         <p className="text-dark whitespace-pre-wrap">{comment.content}</p>
                       </div>
                       {canDeleteComment && (
-                        <button onClick={() => handleDeleteComment(comment.id)} className="text-gray-400 hover:text-red-500 transition text-sm" title="削除">
-                          🗑️
+                        <button onClick={() => handleDeleteComment(comment.id)} className="text-gray-400 hover:text-red-500 transition" title="削除">
+                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>

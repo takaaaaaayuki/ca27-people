@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { User, ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile, PostWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
@@ -19,7 +20,6 @@ export default function ProfileDetail() {
 
   useEffect(() => {
     async function fetchData() {
-      // プロフィール取得
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -39,7 +39,6 @@ export default function ProfileDetail() {
         setIsOwner(user.id === profileData.user_id)
       }
 
-      // この人の投稿を取得（最新3件）
       const { data: postsData } = await supabase
         .from('posts')
         .select('*')
@@ -64,18 +63,13 @@ export default function ProfileDetail() {
     fetchData()
   }, [params.id, router])
 
-  // マークダウンをHTMLに変換（画像対応）
   const renderContent = (text: string) => {
     if (!text) return ''
     let html = text
-    // 画像
     html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-4 rounded-lg max-w-full" />')
-    // 見出し
     html = html.replace(/^### (.+)$/gm, '<h3 class="text-base font-bold text-dark mt-4 mb-1">$1</h3>')
     html = html.replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold text-dark mt-4 mb-2">$1</h2>')
-    // リスト
     html = html.replace(/^- (.+)$/gm, '<li class="ml-4">• $1</li>')
-    // テキスト装飾
     html = formatText(html)
     return html
   }
@@ -105,13 +99,14 @@ export default function ProfileDetail() {
       <div className="bg-gradient-to-r from-primary to-secondary h-48"></div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-32">
-        <Link href="/" className="inline-block text-white hover:underline mb-6">
-          ← 一覧に戻る
+        <Link href="/" className="inline-flex items-center gap-1 text-white hover:underline mb-6">
+          <ArrowLeft size={18} />
+          <span>一覧に戻る</span>
         </Link>
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-8 flex flex-col md:flex-row gap-8 items-start">
-            <div className="w-40 h-40 rounded-xl bg-cream overflow-hidden flex-shrink-0 shadow-md">
+            <div className="w-40 h-40 rounded-xl bg-cream overflow-hidden flex-shrink-0 shadow-md flex items-center justify-center">
               {profile.photo_url ? (
                 <img
                   src={profile.photo_url}
@@ -119,9 +114,7 @@ export default function ProfileDetail() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
-                  👤
-                </div>
+                <User size={60} className="text-gray-300" />
               )}
             </div>
 
@@ -139,7 +132,6 @@ export default function ProfileDetail() {
                   )}
                   <h1 className="text-3xl font-bold text-dark mb-2">{profile.name}</h1>
                   
-                  {/* MBTI バッジ */}
                   {profile.mbti && MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES] && (
                     <span className={`inline-block px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].color} rounded-full text-sm font-medium mb-4`}>
                       {MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].label}
@@ -149,9 +141,10 @@ export default function ProfileDetail() {
                 {isOwner && (
                   <Link
                     href="/profile/edit"
-                    className="px-5 py-2 bg-primary text-white rounded-full hover:bg-secondary transition"
+                    className="flex items-center gap-1 px-5 py-2 bg-primary text-white rounded-full hover:bg-secondary transition"
                   >
-                    編集する
+                    <Edit3 size={16} />
+                    <span>編集する</span>
                   </Link>
                 )}
               </div>
@@ -229,28 +222,33 @@ export default function ProfileDetail() {
                 <h2 className="text-lg font-bold text-primary mb-3">■ SNS</h2>
                 <div className="flex flex-wrap gap-4">
                   {profile.sns_links?.twitter && (
-                    <a href={profile.sns_links.twitter} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
-                      X (Twitter)
+                    <a href={profile.sns_links.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
+                      <Twitter size={18} />
+                      <span>X (Twitter)</span>
                     </a>
                   )}
                   {profile.sns_links?.instagram && (
-                    <a href={profile.sns_links.instagram} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
-                      Instagram
+                    <a href={profile.sns_links.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
+                      <Instagram size={18} />
+                      <span>Instagram</span>
                     </a>
                   )}
                   {profile.sns_links?.facebook && (
-                    <a href={profile.sns_links.facebook} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
-                      Facebook
+                    <a href={profile.sns_links.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
+                      <Facebook size={18} />
+                      <span>Facebook</span>
                     </a>
                   )}
                   {profile.sns_links?.github && (
-                    <a href={profile.sns_links.github} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
-                      GitHub
+                    <a href={profile.sns_links.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
+                      <Github size={18} />
+                      <span>GitHub</span>
                     </a>
                   )}
                   {profile.sns_links?.other && (
-                    <a href={profile.sns_links.other} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
-                      その他
+                    <a href={profile.sns_links.other} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-cream rounded-full text-dark hover:bg-secondary/20 transition">
+                      <Globe size={18} />
+                      <span>その他</span>
                     </a>
                   )}
                 </div>
@@ -259,11 +257,10 @@ export default function ProfileDetail() {
           </div>
         </div>
 
-        {/* 関連投稿セクション */}
         {posts.length > 0 && (
           <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-dark">📝 {profile.name}さんの投稿</h2>
+              <h2 className="text-xl font-bold text-dark">{profile.name}さんの投稿</h2>
               <Link href={`/posts?user=${profile.user_id}`} className="text-primary text-sm font-medium hover:underline">
                 すべて見る →
               </Link>
@@ -276,7 +273,6 @@ export default function ProfileDetail() {
           </div>
         )}
 
-        {/* 自分のプロフィールの場合、投稿ボタンを表示 */}
         {isOwner && posts.length === 0 && (
           <div className="mt-8 bg-white rounded-xl shadow-lg p-6 text-center">
             <p className="text-gray-500 mb-4">まだ投稿がありません</p>
@@ -284,7 +280,7 @@ export default function ProfileDetail() {
               href="/posts/new"
               className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-full hover:bg-secondary transition"
             >
-              ＋ 記事を投稿する
+              記事を投稿する
             </Link>
           </div>
         )}

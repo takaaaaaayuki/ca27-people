@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, Image, Eye, Edit3, Bold, List, Quote, Link as LinkIcon, Type } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatText } from '@/lib/textFormatter'
 
@@ -186,6 +187,10 @@ export default function NewPostPage() {
     <main className="min-h-screen bg-cream">
       <div className="bg-gradient-to-r from-primary to-secondary py-8">
         <div className="max-w-4xl mx-auto px-4">
+          <Link href="/posts" className="inline-flex items-center gap-1 text-white/80 hover:text-white mb-2">
+            <ArrowLeft size={18} />
+            <span>戻る</span>
+          </Link>
           <h1 className="text-2xl font-bold text-white">記事を書く</h1>
         </div>
       </div>
@@ -201,7 +206,7 @@ export default function NewPostPage() {
                   <img src={post.thumbnail_url} alt="サムネイル" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300">
-                    <span className="text-4xl">🖼️</span>
+                    <Image size={40} />
                   </div>
                 )}
               </div>
@@ -247,9 +252,9 @@ export default function NewPostPage() {
               <label className="block text-sm font-medium text-dark mb-2">投稿タイプ</label>
               <div className="flex gap-3">
                 {[
-                  { key: 'blog', label: '📝 ブログ' },
-                  { key: 'event', label: '🎉 イベント' },
-                  { key: 'news', label: '📢 お知らせ' },
+                  { key: 'blog', label: 'ブログ' },
+                  { key: 'event', label: 'イベント' },
+                  { key: 'news', label: 'お知らせ' },
                 ].map((item) => (
                   <button
                     key={item.key}
@@ -275,7 +280,7 @@ export default function NewPostPage() {
                   onChange={(e) => setPost({ ...post, is_official: e.target.checked })}
                   className="w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary"
                 />
-                <span className="font-medium text-dark">🏢 公式投稿として投稿</span>
+                <span className="font-medium text-dark">公式投稿として投稿</span>
               </label>
             )}
           </div>
@@ -287,9 +292,9 @@ export default function NewPostPage() {
               <button
                 type="button"
                 onClick={() => setShowPreview(!showPreview)}
-                className="text-sm text-primary font-medium hover:underline"
+                className="flex items-center gap-1 text-sm text-primary font-medium hover:underline"
               >
-                {showPreview ? '✏️ 編集に戻る' : '👁️ プレビュー'}
+                {showPreview ? <><Edit3 size={16} /> 編集に戻る</> : <><Eye size={16} /> プレビュー</>}
               </button>
             </div>
 
@@ -299,10 +304,10 @@ export default function NewPostPage() {
                 <button
                   type="button"
                   onClick={() => insertFormatting('# ', '', '見出し1')}
-                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100"
+                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 flex items-center gap-1"
                   title="見出し1"
                 >
-                  H1
+                  <Type size={14} /> H1
                 </button>
                 <button
                   type="button"
@@ -324,10 +329,10 @@ export default function NewPostPage() {
                 <button
                   type="button"
                   onClick={() => insertFormatting('**', '**', 'テキスト')}
-                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 font-bold"
+                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 font-bold flex items-center gap-1"
                   title="太字"
                 >
-                  B
+                  <Bold size={14} />
                 </button>
                 <button
                   type="button"
@@ -349,30 +354,30 @@ export default function NewPostPage() {
                 <button
                   type="button"
                   onClick={() => insertFormatting('- ', '', 'リスト項目')}
-                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100"
+                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 flex items-center gap-1"
                   title="リスト"
                 >
-                  • リスト
+                  <List size={14} /> リスト
                 </button>
                 <button
                   type="button"
                   onClick={() => insertFormatting('> ', '', '引用文')}
-                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100"
+                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 flex items-center gap-1"
                   title="引用"
                 >
-                  " 引用
+                  <Quote size={14} /> 引用
                 </button>
                 <button
                   type="button"
                   onClick={() => insertFormatting('[', '](URL)', 'リンクテキスト')}
-                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100"
+                  className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 flex items-center gap-1"
                   title="リンク"
                 >
-                  🔗 リンク
+                  <LinkIcon size={14} /> リンク
                 </button>
                 <div className="w-px bg-gray-300 mx-1"></div>
-                <label className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 cursor-pointer">
-                  📷 画像
+                <label className="px-3 py-1 bg-white border border-gray-200 rounded text-sm hover:bg-gray-100 cursor-pointer flex items-center gap-1">
+                  <Image size={14} /> 画像
                   <input
                     type="file"
                     accept="image/*"
@@ -424,7 +429,7 @@ export default function NewPostPage() {
 
             {/* 書き方ヘルプ */}
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-600 mb-2">📝 書き方ヒント</p>
+              <p className="text-sm font-medium text-gray-600 mb-2">書き方ヒント</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-gray-500">
                 <span><code className="bg-gray-200 px-1 rounded"># 見出し</code></span>
                 <span><code className="bg-gray-200 px-1 rounded">**太字**</code></span>

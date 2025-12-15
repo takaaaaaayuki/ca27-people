@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Bell, Heart, MessageCircle, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { NotificationWithUser } from '@/lib/types'
 
@@ -96,10 +97,10 @@ export default function NotificationBell() {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'like': return '❤️'
-      case 'comment': return '💬'
-      case 'event_reminder': return '📅'
-      default: return '🔔'
+      case 'like': return <Heart size={16} className="text-red-500" />
+      case 'comment': return <MessageCircle size={16} className="text-blue-500" />
+      case 'event_reminder': return <Calendar size={16} className="text-orange-500" />
+      default: return <Bell size={16} className="text-gray-500" />
     }
   }
 
@@ -111,7 +112,7 @@ export default function NotificationBell() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-primary transition"
       >
-        <span className="text-xl">🔔</span>
+        <Bell size={22} />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -160,15 +161,15 @@ export default function NotificationBell() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-cream flex items-center justify-center">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-cream flex items-center justify-center overflow-hidden">
                         {notification.related_user?.photo_url ? (
                           <img 
                             src={notification.related_user.photo_url} 
                             alt="" 
-                            className="w-full h-full rounded-full object-cover"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-lg">{getIcon(notification.type)}</span>
+                          getIcon(notification.type)
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
