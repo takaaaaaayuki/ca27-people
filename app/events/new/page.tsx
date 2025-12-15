@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Clock, MapPin, Users } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, MapPin, User } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function NewEventPage() {
@@ -17,7 +17,7 @@ export default function NewEventPage() {
     event_date: '',
     event_time: '',
     location: '',
-    max_participants: 0,
+    organizer: '',
   })
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function NewEventPage() {
         event_date: event.event_date,
         event_time: event.event_time || null,
         location: event.location || null,
-        max_participants: event.max_participants || 0,
+        organizer: event.organizer || null,
         created_by: userId,
       }])
 
@@ -73,7 +73,10 @@ export default function NewEventPage() {
     <main className="min-h-screen bg-cream">
       <div className="bg-gradient-to-r from-primary to-secondary py-8">
         <div className="max-w-2xl mx-auto px-4">
-          <Link href="/events" className="inline-flex items-center gap-1 text-white/80 hover:text-white mb-2">
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-1 text-white/80 hover:text-white mb-2"
+          >
             <ArrowLeft size={18} />
             <span>戻る</span>
           </Link>
@@ -108,6 +111,20 @@ export default function NewEventPage() {
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="イベントの詳細を入力..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-dark mb-2 flex items-center gap-1">
+                <User size={16} />
+                主催者名
+              </label>
+              <input
+                type="text"
+                value={event.organizer}
+                onChange={(e) => setEvent({ ...event, organizer: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="名前か団体・組織・部署名"
               />
             </div>
 
@@ -151,21 +168,6 @@ export default function NewEventPage() {
                 onChange={(e) => setEvent({ ...event, location: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="例: Zoom / 渋谷オフィス"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-dark mb-2 flex items-center gap-1">
-                <Users size={16} />
-                定員（0 = 無制限）
-              </label>
-              <input
-                type="number"
-                value={event.max_participants}
-                onChange={(e) => setEvent({ ...event, max_participants: parseInt(e.target.value) || 0 })}
-                min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="0"
               />
             </div>
           </div>

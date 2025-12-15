@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Calendar, MapPin, Users, Clock, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type Event = {
@@ -108,6 +108,25 @@ export default function EventsPage() {
         [eventId]: (participants[eventId] || []).filter(p => p.user_id !== userId)
       })
     }
+  }
+
+  // イベント削除機能
+  async function handleDelete(eventId: string) {
+    if (!confirm('本当にこのイベントを削除しますか？')) return
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+
+    if (error) {
+      console.error('Error deleting event:', error)
+      alert('イベントの削除に失敗しました')
+      return
+    }
+
+    // 削除成功時にローカルのstateからも削除
+    setEvents(events.filter(e => e.id !== eventId))
   }
 
   const getDaysInMonth = (date: Date) => {
@@ -249,6 +268,7 @@ export default function EventsPage() {
                   const eventParticipants = participants[event.id] || []
                   const isJoined = eventParticipants.some(p => p.user_id === userId)
                   const isFull = event.max_participants > 0 && eventParticipants.length >= event.max_participants
+                  const canDelete = isAdmin || (userId && event.created_by === userId)
 
                   return (
                     <div key={event.id} className="bg-white rounded-xl shadow-sm p-6">
@@ -283,7 +303,7 @@ export default function EventsPage() {
                         </div>
 
                         {userId && (
-                          <div>
+                          <div className="flex items-center gap-2">
                             {isJoined ? (
                               <button
                                 onClick={() => handleLeave(event.id)}
@@ -298,6 +318,17 @@ export default function EventsPage() {
                                 className="px-4 py-2 bg-primary text-white font-medium rounded-full hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                               >
                                 {isFull ? '満員' : '参加する'}
+                              </button>
+                            )}
+
+                            {/* 削除ボタン */}
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDelete(event.id)}
+                                className="p-2 ml-2 text-gray-400 hover:text-red-500 transition rounded-full hover:bg-red-50"
+                                title="イベントを削除"
+                              >
+                                <Trash2 size={20} />
                               </button>
                             )}
                           </div>
@@ -321,6 +352,7 @@ export default function EventsPage() {
                 <div className="space-y-4">
                   {pastEvents.map(event => {
                     const eventParticipants = participants[event.id] || []
+                    const canDelete = isAdmin || (userId && event.created_by === userId)
 
                     return (
                       <div key={event.id} className="bg-white rounded-xl shadow-sm p-6 opacity-70">
@@ -352,9 +384,21 @@ export default function EventsPage() {
                               </span>
                             </div>
                           </div>
-                          <span className="px-3 py-1 bg-gray-200 text-gray-500 text-sm rounded-full">
-                            終了
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 bg-gray-200 text-gray-500 text-sm rounded-full">
+                              終了
+                            </span>
+                            {/* 過去イベントの削除ボタン */}
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDelete(event.id)}
+                                className="p-2 ml-1 text-gray-400 hover:text-red-500 transition rounded-full hover:bg-red-50"
+                                title="イベントを削除"
+                              >
+                                <Trash2 size={20} />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )
