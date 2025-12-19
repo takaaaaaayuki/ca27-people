@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Lock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { PostWithAuthor } from '@/lib/types'
 import NewsCard from '@/components/NewsCard'
@@ -16,15 +16,61 @@ export default function PostsPage() {
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
-    if (userStr) {
-      const user = JSON.parse(userStr)
-      setUserId(user.id)
+    if (!userStr) {
+      // ログインしていない場合
+      setLoading(false)
+      return
     }
+    
+    const user = JSON.parse(userStr)
+    setUserId(user.id)
+    
     const adminFlag = localStorage.getItem('isAdmin')
     setIsAdmin(adminFlag === 'true')
 
     fetchPosts()
   }, [])
+
+  // ログインしていない場合の表示
+  if (!loading && !userId) {
+    return (
+      <main className="min-h-screen bg-cream">
+        <div className="bg-gradient-to-r from-primary to-secondary py-12">
+          <div className="max-w-6xl mx-auto px-4">
+            <h1 className="text-3xl font-bold text-white mb-2">ニュース</h1>
+            <p className="text-white/80">CA27メンバーの投稿・お知らせ</p>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-16">
+          <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
+            <div className="w-20 h-20 bg-cream rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock size={40} className="text-gray-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-dark mb-4">ログインが必要です</h2>
+            <p className="text-gray-500 mb-8">
+              ニュースページは27卒メンバー限定です。<br />
+              ログインしてアクセスしてください。
+            </p>
+            <div className="flex justify-center gap-4">
+              <Link
+                href="/login"
+                className="px-8 py-3 bg-primary text-white font-medium rounded-full hover:bg-secondary transition"
+              >
+                ログイン
+              </Link>
+              <Link
+                href="/register"
+                className="px-8 py-3 bg-white text-primary font-medium rounded-full border-2 border-primary hover:bg-primary/5 transition"
+              >
+                新規登録
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   async function fetchPosts() {
     const { data: postsData, error } = await supabase
