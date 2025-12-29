@@ -189,7 +189,7 @@ export default function ProfileDetail() {
 
             {profile.goals && (
               <div>
-                <h2 className="text-lg font-bold text-primary mb-3">■ 27卒でやりたいこと</h2>
+                <h2 className="text-lg font-bold text-primary mb-3">■ 同期でやりたいこと</h2>
                 <div 
                   className="text-dark leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: renderContent(profile.goals) }}

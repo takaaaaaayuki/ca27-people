@@ -4,8 +4,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "CA27 People",
-  description: "27卒の仲間たちを紹介するサイト",
+  title: "MeetS",
+  description: "仲間たちを紹介するサイト",
 };
 
 export default function RootLayout({

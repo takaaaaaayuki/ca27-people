@@ -61,7 +61,7 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-dark">ログイン</h1>
-            <p className="text-gray-500 mt-2">CA27 Peopleへおかえりなさい</p>
+            <p className="text-gray-500 mt-2">MeetSへおかえりなさい</p>
           </div>
 
           {error && (

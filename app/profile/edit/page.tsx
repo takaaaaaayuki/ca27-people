@@ -572,7 +572,7 @@ export default function EditProfile() {
               />
 
               <RichTextArea
-                label="27卒でやりたいこと"
+                label="同期でやりたいこと"
                 value={profile.goals || ''}
                 onChange={(value) => setProfile({ ...profile, goals: value })}
                 onImageUpload={(e) => handleContentImageUpload(e, 'goals')}

@@ -65,7 +65,7 @@ export default function EventsPage() {
             </div>
             <h2 className="text-2xl font-bold text-dark mb-4">ログインが必要です</h2>
             <p className="text-gray-500 mb-8">
-              イベントページは27卒メンバー限定です。<br />
+              イベントページは2メンバー限定です。<br />
               ログインしてアクセスしてください。
             </p>
             <div className="flex justify-center gap-4">
