@@ -155,6 +155,9 @@ export default function EditProfile() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [profile, setProfile] = useState<Partial<Profile>>({
     name: '',
+    name_romaji: '',
+    nickname: '',
+    birthday: null,
     photo_url: '',
     career: '',
     effort: '',
@@ -196,6 +199,9 @@ export default function EditProfile() {
           interested_departments: data.interested_departments || [],
           role: data.role || 'business',
           mbti: data.mbti || null,
+          name_romaji: data.name_romaji || '',
+          nickname: data.nickname || '',
+          birthday: data.birthday || null,
         })
         if (data.photo_url) {
           setPreviewUrl(data.photo_url)
@@ -316,6 +322,9 @@ export default function EditProfile() {
         .from('profiles')
         .update({
           name: profile.name,
+          name_romaji: profile.name_romaji || null,
+          nickname: profile.nickname || null,
+          birthday: profile.birthday || null,
           photo_url: photoUrl,
           career: profile.career,
           effort: profile.effort,
@@ -404,6 +413,39 @@ export default function EditProfile() {
                   value={profile.name || ''}
                   onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                   required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="例: 山田 太郎"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">名前（ローマ字）</label>
+                <input
+                  type="text"
+                  value={profile.name_romaji || ''}
+                  onChange={(e) => setProfile({ ...profile, name_romaji: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="例: Taro Yamada"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">あだ名</label>
+                <input
+                  type="text"
+                  value={profile.nickname || ''}
+                  onChange={(e) => setProfile({ ...profile, nickname: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="例: たろー"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">誕生日</label>
+                <input
+                  type="date"
+                  value={profile.birthday || ''}
+                  onChange={(e) => setProfile({ ...profile, birthday: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
@@ -677,7 +719,7 @@ export default function EditProfile() {
             <div className="flex flex-wrap gap-2">
               {profile.tags?.map((tag) => (
                 <span key={tag} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/20 text-primary rounded-full">
-                  {tag}
+                  #{tag}
                   <button type="button" onClick={() => handleRemoveTag(tag)} className="text-primary/60 hover:text-primary">
                     <X size={14} />
                   </button>

@@ -27,6 +27,9 @@ export type Profile = {
   mbti: string | null
   created_at: string
   updated_at: string
+  birthday?: string | null
+  name_romaji?: string | null
+  nickname?: string | null
 }
 
 export type Event = {

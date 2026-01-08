@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe } from 'lucide-react'
+import { User, ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile, PostWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
@@ -74,6 +74,11 @@ export default function ProfileDetail() {
     return html
   }
 
+  const formatBirthday = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return `${date.getMonth() + 1}月${date.getDate()}日`
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-cream">
@@ -105,6 +110,7 @@ export default function ProfileDetail() {
         </Link>
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* ヘッダー部分：写真・名前・MBTI */}
           <div className="p-8 flex flex-col md:flex-row gap-8 items-start">
             <div className="w-40 h-40 rounded-xl bg-cream overflow-hidden flex-shrink-0 shadow-md flex items-center justify-center">
               {profile.photo_url ? (
@@ -121,19 +127,30 @@ export default function ProfileDetail() {
             <div className="flex-1">
               <div className="flex justify-between items-start">
                 <div>
-                  {profile.interested_departments && profile.interested_departments.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {profile.interested_departments.map((dept) => (
-                        <span key={dept} className="text-primary font-medium text-sm bg-primary/10 px-3 py-1 rounded-full">
-                          {dept}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <h1 className="text-3xl font-bold text-dark mb-2">{profile.name}</h1>
+                  {/* 名前 */}
+                  <h1 className="text-3xl font-bold text-dark">{profile.name}</h1>
                   
+                  {/* ローマ字名 */}
+                  {profile.name_romaji && (
+                    <p className="text-gray-500 text-sm mt-1">{profile.name_romaji}</p>
+                  )}
+                  
+                  {/* あだ名・誕生日 */}
+                  <div className="flex flex-wrap items-center gap-3 mt-2">
+                    {profile.nickname && (
+                      <span className="text-primary font-medium">「{profile.nickname}」</span>
+                    )}
+                    {profile.birthday && (
+                      <span className="flex items-center gap-1 text-gray-500 text-sm">
+                        <Cake size={16} />
+                        {formatBirthday(profile.birthday)}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* MBTI */}
                   {profile.mbti && MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES] && (
-                    <span className={`inline-block px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].color} rounded-full text-sm font-medium mb-4`}>
+                    <span className={`inline-block px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].color} rounded-full text-sm font-medium mt-3`}>
                       {MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].label}
                     </span>
                   )}
@@ -148,24 +165,29 @@ export default function ProfileDetail() {
                   </Link>
                 )}
               </div>
-
-              {profile.tags && profile.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {profile.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-4 py-1 bg-secondary/20 text-primary rounded-full text-sm font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
+          {/* 興味のある事業部セクション（上部） */}
+          {profile.interested_departments && profile.interested_departments.length > 0 && (
+            <div className="px-8 pb-6">
+              <h2 className="text-sm font-bold text-gray-500 mb-3 flex items-center gap-2">
+                <Building2 size={16} />
+                興味のある事業部
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {profile.interested_departments.map((dept) => (
+                  <span key={dept} className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
+                    {dept}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="h-1 bg-gradient-to-r from-primary to-secondary"></div>
 
+          {/* 自己紹介セクション */}
           <div className="p-8 space-y-8">
             {profile.career && (
               <div>
@@ -217,6 +239,27 @@ export default function ProfileDetail() {
               </div>
             )}
 
+            {/* 自由タグセクション（SNSの上） */}
+            {profile.tags && profile.tags.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
+                  <Hash size={20} />
+                  タグ
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {profile.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-4 py-1.5 bg-secondary/20 text-primary rounded-full text-sm font-medium"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SNSセクション（最後） */}
             {hasSnsLinks && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ SNS</h2>
