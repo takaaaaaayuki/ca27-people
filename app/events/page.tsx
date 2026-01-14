@@ -194,25 +194,39 @@ export default function EventsPage() {
   }
 
   const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    // dateをYYYY-MM-DD形式に変換（ローカルタイムゾーンで）
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    
     return events.filter(e => e.event_date === dateStr)
   }
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return `${date.getMonth() + 1}/${date.getDate()}`
+    // "YYYY-MM-DD" 形式の文字列を分解
+    const [year, month, day] = dateStr.split('-').map(Number)
+    return `${month}/${day}`
   }
 
   const days = getDaysInMonth(currentMonth)
   const weekDays = ['日', '月', '火', '水', '木', '金', '土']
 
-  // 今日の日付（時間なし）
-  const today = new Date(new Date().toDateString())
+  // 今日の日付を取得（YYYY-MM-DD形式）
+  const getTodayString = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const todayStr = getTodayString()
 
   // 今後のイベントと過去のイベントを分ける
-  const upcomingEvents = events.filter(e => new Date(e.event_date) >= today)
-  const pastEvents = events.filter(e => new Date(e.event_date) < today).sort((a, b) => 
-    new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
+  const upcomingEvents = events.filter(e => e.event_date >= todayStr)
+  const pastEvents = events.filter(e => e.event_date < todayStr).sort((a, b) => 
+    b.event_date.localeCompare(a.event_date)
   )
 
   return (
