@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
 import { DEPARTMENT_OPTIONS, ROLES, MBTI_TYPES } from '@/lib/constants'
 import { formatText } from '@/lib/textFormatter'
+import ProfileProgress from '@/components/ProfileProgress'
 
 function RichTextArea({
   label,
@@ -378,6 +379,9 @@ export default function EditProfile() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* プロフィール進捗バー */}
+        <ProfileProgress profile={profile} />
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm">
             <h2 className="text-lg font-bold text-primary mb-4">プロフィール写真</h2>
