@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake, QrCode } from 'lucide-react'
+import { ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake, QrCode } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile, PostWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
 import { MBTI_TYPES } from '@/lib/constants'
 import NewsCard from '@/components/NewsCard'
 import QRCodeModal from '@/components/QRCodeModal'
+import PhotoSlider from '@/components/PhotoSlider'
 
 export default function ProfileDetail() {
   const params = useParams()
@@ -89,6 +90,17 @@ export default function ProfileDetail() {
     return ''
   }
 
+  // 写真URLsを取得（photo_urlsがあればそれを使う、なければphoto_urlを配列化）
+  const getPhotoUrls = (): string[] => {
+    if (profile?.photo_urls && profile.photo_urls.length > 0) {
+      return profile.photo_urls.filter(url => url && url.trim() !== '')
+    }
+    if (profile?.photo_url) {
+      return [profile.photo_url]
+    }
+    return []
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-cream">
@@ -109,6 +121,8 @@ export default function ProfileDetail() {
   const hasSnsLinks = profile.sns_links && 
     (profile.sns_links.twitter || profile.sns_links.instagram || profile.sns_links.github || profile.sns_links.facebook || profile.sns_links.other)
 
+  const photoUrls = getPhotoUrls()
+
   return (
     <main className="min-h-screen bg-cream">
       <div className="bg-gradient-to-r from-primary to-secondary h-48"></div>
@@ -122,16 +136,13 @@ export default function ProfileDetail() {
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* ヘッダー部分：写真・名前・MBTI */}
           <div className="p-8 flex flex-col md:flex-row gap-8 items-start">
-            <div className="w-40 h-40 rounded-xl bg-cream overflow-hidden flex-shrink-0 shadow-md flex items-center justify-center">
-              {profile.photo_url ? (
-                <img
-                  src={profile.photo_url}
-                  alt={profile.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User size={60} className="text-gray-300" />
-              )}
+            {/* 写真スライダー */}
+            <div className="flex-shrink-0">
+              <PhotoSlider 
+                photos={photoUrls}
+                userName={profile.name}
+                size="medium"
+              />
             </div>
 
             <div className="flex-1">

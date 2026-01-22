@@ -2,13 +2,191 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bold, Type, List, Image, Eye, Edit3, X, ChevronDown, Plus } from 'lucide-react'
+import { Bold, Type, List, Image, Eye, Edit3, X, ChevronDown, Plus, Trash2, MoveLeft, MoveRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile } from '@/lib/types'
 import { DEPARTMENT_OPTIONS, ROLES, MBTI_TYPES } from '@/lib/constants'
 import { formatText } from '@/lib/textFormatter'
 import ProfileProgress from '@/components/ProfileProgress'
 
+// 写真アップロードセクションコンポーネント
+function PhotoUploadSection({ 
+  photos, 
+  onPhotosChange,
+  userId 
+}: { 
+  photos: string[]
+  onPhotosChange: (photos: string[]) => void
+  userId: string | null
+}) {
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    // 5枚制限チェック
+    if (photos.length + files.length > 5) {
+      alert('写真は最大5枚までアップロードできます')
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${userId}-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file)
+
+        if (uploadError) throw uploadError
+
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName)
+
+        return urlData.publicUrl
+      })
+
+      const newUrls = await Promise.all(uploadPromises)
+      onPhotosChange([...photos, ...newUrls])
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('画像のアップロードに失敗しました')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemovePhoto = (index: number) => {
+    const newPhotos = photos.filter((_, i) => i !== index)
+    onPhotosChange(newPhotos)
+  }
+
+  const handleMoveLeft = (index: number) => {
+    if (index === 0) return
+    const newPhotos = [...photos]
+    ;[newPhotos[index - 1], newPhotos[index]] = [newPhotos[index], newPhotos[index - 1]]
+    onPhotosChange(newPhotos)
+  }
+
+  const handleMoveRight = (index: number) => {
+    if (index === photos.length - 1) return
+    const newPhotos = [...photos]
+    ;[newPhotos[index], newPhotos[index + 1]] = [newPhotos[index + 1], newPhotos[index]]
+    onPhotosChange(newPhotos)
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-primary">プロフィール写真</h2>
+          <p className="text-xs text-gray-500 mt-1">最大5枚まで登録可能（1枚目がメイン写真）</p>
+        </div>
+        {photos.length < 5 && (
+          <label className="px-4 py-2 bg-primary text-white rounded-full cursor-pointer hover:bg-secondary transition text-sm font-medium flex items-center gap-1">
+            <Plus size={16} />
+            写真を追加
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+        )}
+      </div>
+
+      {uploading && (
+        <div className="text-center py-4 text-sm text-gray-500">
+          アップロード中...
+        </div>
+      )}
+
+      {/* 写真一覧 */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {photos.map((photo, index) => (
+          <div key={index} className="relative group">
+            <div className="aspect-square rounded-xl overflow-hidden bg-cream shadow-md">
+              <img
+                src={photo}
+                alt={`写真 ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            
+            {/* メインバッジ */}
+            {index === 0 && (
+              <div className="absolute top-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded-full font-medium">
+                メイン
+              </div>
+            )}
+
+            {/* コントロールボタン */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
+              {/* 左に移動 */}
+              {index > 0 && (
+                <button
+                  type="button"
+                  onClick={() => handleMoveLeft(index)}
+                  className="p-2 bg-white rounded-full hover:bg-gray-100 transition"
+                  title="左に移動"
+                >
+                  <MoveLeft size={18} className="text-dark" />
+                </button>
+              )}
+              
+              {/* 削除 */}
+              <button
+                type="button"
+                onClick={() => handleRemovePhoto(index)}
+                className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
+                title="削除"
+              >
+                <Trash2 size={18} />
+              </button>
+
+              {/* 右に移動 */}
+              {index < photos.length - 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleMoveRight(index)}
+                  className="p-2 bg-white rounded-full hover:bg-gray-100 transition"
+                  title="右に移動"
+                >
+                  <MoveRight size={18} className="text-dark" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* 空のスロット */}
+        {photos.length < 5 && Array.from({ length: 5 - photos.length }).map((_, i) => (
+          <div key={`empty-${i}`} className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <Image size={32} className="mx-auto mb-1" />
+              <p className="text-xs">空き</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// RichTextAreaコンポーネント（変更なし）
 function RichTextArea({
   label,
   value,
@@ -148,18 +326,21 @@ function RichTextArea({
   )
 }
 
+// メインコンポーネント
 export default function EditProfile() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [photoUrls, setPhotoUrls] = useState<string[]>([])
   const [profile, setProfile] = useState<Partial<Profile>>({
     name: '',
     name_romaji: '',
     nickname: '',
     birthday: null,
     photo_url: '',
+    photo_urls: [],
     career: '',
     effort: '',
     goals: '',
@@ -172,8 +353,6 @@ export default function EditProfile() {
     mbti: null,
   })
   const [tagInput, setTagInput] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showDeptSelector, setShowDeptSelector] = useState(false)
   const [showMbtiSelector, setShowMbtiSelector] = useState(false)
 
@@ -203,9 +382,14 @@ export default function EditProfile() {
           name_romaji: data.name_romaji || '',
           nickname: data.nickname || '',
           birthday: data.birthday || null,
+          photo_urls: data.photo_urls || [],
         })
-        if (data.photo_url) {
-          setPreviewUrl(data.photo_url)
+        
+        // photo_urlsがあればそれを使う、なければphoto_urlを配列化
+        if (data.photo_urls && data.photo_urls.length > 0) {
+          setPhotoUrls(data.photo_urls)
+        } else if (data.photo_url) {
+          setPhotoUrls([data.photo_url])
         }
       }
       setLoading(false)
@@ -213,14 +397,6 @@ export default function EditProfile() {
 
     fetchProfile()
   }, [router])
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-      setPreviewUrl(URL.createObjectURL(file))
-    }
-  }
 
   const handleContentImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -301,24 +477,6 @@ export default function EditProfile() {
     setSaving(true)
 
     try {
-      let photoUrl = profile.photo_url
-
-      if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop()
-        const fileName = `${userId}-${Date.now()}.${fileExt}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, imageFile)
-
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(fileName)
-          photoUrl = urlData.publicUrl
-        }
-      }
-
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -326,7 +484,8 @@ export default function EditProfile() {
           name_romaji: profile.name_romaji || null,
           nickname: profile.nickname || null,
           birthday: profile.birthday || null,
-          photo_url: photoUrl,
+          photo_urls: photoUrls,
+          photo_url: photoUrls.length > 0 ? photoUrls[0] : null,
           career: profile.career,
           effort: profile.effort,
           goals: profile.goals,
@@ -370,6 +529,12 @@ export default function EditProfile() {
     return acc
   }, {} as Record<string, Array<{ key: string; label: string; group: string; color: string }>>)
 
+  // photo_urlsをprofileに同期
+  const profileWithPhotos = {
+    ...profile,
+    photo_urls: photoUrls
+  }
+
   return (
     <main className="min-h-screen bg-cream">
       <div className="bg-gradient-to-r from-primary to-secondary py-8">
@@ -380,31 +545,16 @@ export default function EditProfile() {
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* プロフィール進捗バー */}
-        <ProfileProgress profile={profile} />
+        <ProfileProgress profile={profileWithPhotos} />
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* プロフィール写真セクション */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h2 className="text-lg font-bold text-primary mb-4">プロフィール写真</h2>
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-cream overflow-hidden shadow-md flex items-center justify-center">
-                {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-gray-300 text-3xl">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  </span>
-                )}
-              </div>
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-primary file:text-white hover:file:bg-secondary"
-                />
-                <p className="text-xs text-gray-400 mt-2">JPG, PNG形式（推奨: 正方形の画像）</p>
-              </div>
-            </div>
+            <PhotoUploadSection 
+              photos={photoUrls}
+              onPhotosChange={setPhotoUrls}
+              userId={userId}
+            />
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm">

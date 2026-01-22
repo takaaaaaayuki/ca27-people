@@ -8,9 +8,9 @@ type ProfileProgressProps = {
 }
 
 export default function ProfileProgress({ profile }: ProfileProgressProps) {
-  // 各項目の完成状況をチェック
+  // 各項目の完成状況をチェック（photo_urls対応）
   const checks = {
-    photo: !!profile.photo_url,
+    photo: !!(profile.photo_urls && profile.photo_urls.length > 0) || !!profile.photo_url,
     career: !!profile.career && profile.career.trim().length > 0,
     effort: !!profile.effort && profile.effort.trim().length > 0,
     goals: !!profile.goals && profile.goals.trim().length > 0,

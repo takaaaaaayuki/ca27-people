@@ -9,6 +9,7 @@ export type Profile = {
   user_id: string
   name: string
   photo_url: string | null
+  photo_urls: string[] | null  // ← 追加
   career: string | null
   effort: string | null
   goals: string | null
