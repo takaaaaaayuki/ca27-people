@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake } from 'lucide-react'
+import { User, ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake, QrCode } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile, PostWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
 import { MBTI_TYPES } from '@/lib/constants'
 import NewsCard from '@/components/NewsCard'
+import QRCodeModal from '@/components/QRCodeModal'
 
 export default function ProfileDetail() {
   const params = useParams()
@@ -17,6 +18,7 @@ export default function ProfileDetail() {
   const [posts, setPosts] = useState<PostWithAuthor[]>([])
   const [loading, setLoading] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -77,6 +79,14 @@ export default function ProfileDetail() {
   const formatBirthday = (dateStr: string) => {
     const date = new Date(dateStr)
     return `${date.getMonth() + 1}月${date.getDate()}日`
+  }
+
+  // プロフィールURLを取得
+  const getProfileUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.href
+    }
+    return ''
   }
 
   if (loading) {
@@ -155,15 +165,30 @@ export default function ProfileDetail() {
                     </span>
                   )}
                 </div>
-                {isOwner && (
-                  <Link
-                    href="/profile/edit"
-                    className="flex items-center gap-1 px-5 py-2 bg-primary text-white rounded-full hover:bg-secondary transition"
+                
+                {/* ボタン群 */}
+                <div className="flex gap-2">
+                  {/* QRコードボタン */}
+                  <button
+                    onClick={() => setIsQRModalOpen(true)}
+                    className="flex items-center gap-1 px-4 py-2 bg-white text-primary border-2 border-primary rounded-full hover:bg-primary/5 transition"
+                    title="QRコードで共有"
                   >
-                    <Edit3 size={16} />
-                    <span>編集する</span>
-                  </Link>
-                )}
+                    <QrCode size={18} />
+                    <span className="hidden sm:inline">QRコード</span>
+                  </button>
+                  
+                  {/* 編集ボタン（本人のみ） */}
+                  {isOwner && (
+                    <Link
+                      href="/profile/edit"
+                      className="flex items-center gap-1 px-5 py-2 bg-primary text-white rounded-full hover:bg-secondary transition"
+                    >
+                      <Edit3 size={16} />
+                      <span>編集する</span>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -330,6 +355,14 @@ export default function ProfileDetail() {
 
         <div className="h-16"></div>
       </div>
+
+      {/* QRコードモーダル */}
+      <QRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        url={getProfileUrl()}
+        userName={profile.name}
+      />
     </main>
   )
 }
