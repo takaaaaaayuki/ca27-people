@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search, Building2, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -10,6 +11,7 @@ import NewsCard from '@/components/NewsCard'
 import { DEPARTMENT_OPTIONS, ROLES, RoleKey } from '@/lib/constants'
 
 export default function Home() {
+  const router = useRouter()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([])
   const [posts, setPosts] = useState<PostWithAuthor[]>([])
@@ -18,13 +20,21 @@ export default function Home() {
   const [selectedDepartment, setSelectedDepartment] = useState('')
   const [selectedRole, setSelectedRole] = useState<RoleKey | ''>('')
   const [showDeptFilter, setShowDeptFilter] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    // ログイン確認
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      router.push('/login')
+      return
+    }
+    setIsAuthenticated(true)
     fetchData()
-  }, [])
+  }, [router])
 
   async function fetchData() {
-    // プロフィール取得
+    // プロフィール取得（guestを除外）
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
       .select('*')
@@ -33,8 +43,12 @@ export default function Home() {
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError)
     } else {
-      setProfiles(profilesData || [])
-      setFilteredProfiles(profilesData || [])
+      // guestアカウントを除外
+      const filteredData = (profilesData || []).filter(
+        profile => profile.name !== 'guest' && !profile.user_id?.includes('guest')
+      )
+      setProfiles(filteredData)
+      setFilteredProfiles(filteredData)
     }
 
     // 投稿取得（最新5件）
@@ -111,6 +125,11 @@ export default function Home() {
     business: profiles.filter(p => p.role === 'business' || !p.role).length,
     engineer: profiles.filter(p => p.role === 'engineer').length,
     designer: profiles.filter(p => p.role === 'designer').length,
+  }
+
+  // ログイン確認中は何も表示しない
+  if (!isAuthenticated) {
+    return null
   }
 
   return (

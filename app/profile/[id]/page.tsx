@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake, QrCode } from 'lucide-react'
+import { ArrowLeft, Edit3, Twitter, Instagram, Facebook, Github, Globe, Building2, Hash, Cake, QrCode, Heart } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Profile, PostWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
@@ -11,6 +11,7 @@ import { MBTI_TYPES } from '@/lib/constants'
 import NewsCard from '@/components/NewsCard'
 import QRCodeModal from '@/components/QRCodeModal'
 import PhotoSlider from '@/components/PhotoSlider'
+import ProfileComments from '@/components/ProfileComments'
 
 export default function ProfileDetail() {
   const params = useParams()
@@ -20,6 +21,10 @@ export default function ProfileDetail() {
   const [loading, setLoading] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
   const [isQRModalOpen, setIsQRModalOpen] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [likeCount, setLikeCount] = useState(0)
+  const [hasLiked, setHasLiked] = useState(false)
+  const [isLiking, setIsLiking] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -37,8 +42,11 @@ export default function ProfileDetail() {
       setProfile(profileData)
 
       const userStr = localStorage.getItem('user')
+      let userId: string | null = null
       if (userStr) {
         const user = JSON.parse(userStr)
+        userId = user.id
+        setCurrentUserId(userId)
         setIsOwner(user.id === profileData.user_id)
       }
 
@@ -60,11 +68,105 @@ export default function ProfileDetail() {
         setPosts(postsWithAuthor)
       }
 
+      // いいね数を取得
+      const { count } = await supabase
+        .from('profile_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', profileData.id)
+
+      setLikeCount(count || 0)
+
+      // 自分がいいねしているかチェック
+      if (userId) {
+        const { data: likeData } = await supabase
+          .from('profile_likes')
+          .select('id')
+          .eq('profile_id', profileData.id)
+          .eq('user_id', userId)
+          .maybeSingle()
+
+        setHasLiked(!!likeData)
+      }
+
       setLoading(false)
     }
 
     fetchData()
   }, [params.id, router])
+
+  const handleLike = async () => {
+    if (!currentUserId) {
+      alert('ログインが必要です')
+      return
+    }
+
+    if (!profile || isLiking) return
+
+    setIsLiking(true)
+
+    try {
+      if (hasLiked) {
+        // いいね解除
+        const { error } = await supabase
+          .from('profile_likes')
+          .delete()
+          .eq('profile_id', profile.id)
+          .eq('user_id', currentUserId)
+
+        if (error) {
+          console.error('いいね解除エラー:', error)
+          throw error
+        }
+
+        setHasLiked(false)
+        setLikeCount(prev => Math.max(0, prev - 1))
+      } else {
+        // いいね追加（既存チェック）
+        const { data: existingLike } = await supabase
+          .from('profile_likes')
+          .select('id')
+          .eq('profile_id', profile.id)
+          .eq('user_id', currentUserId)
+          .maybeSingle()
+
+        if (existingLike) {
+          // 既にいいね済み
+          setHasLiked(true)
+          setIsLiking(false)
+          return
+        }
+
+        const { error } = await supabase
+          .from('profile_likes')
+          .insert({
+            profile_id: profile.id,
+            user_id: currentUserId
+          })
+
+        if (error) {
+          console.error('いいね追加エラー:', error)
+          // 409エラー（既に存在する）の場合は状態だけ更新
+          if (error.code === '23505') {
+            setHasLiked(true)
+            setIsLiking(false)
+            return
+          }
+          throw error
+        }
+
+        setHasLiked(true)
+        setLikeCount(prev => prev + 1)
+      }
+    } catch (error: any) {
+      console.error('いいね処理エラー:', error)
+      // ユーザーには具体的なエラーを表示しない
+      if (error.code !== '23505') {
+        alert('エラーが発生しました。もう一度お試しください。')
+      }
+    } finally {
+      setIsLiking(false)
+    }
+  }
 
   const renderContent = (text: string) => {
     if (!text) return ''
@@ -82,7 +184,6 @@ export default function ProfileDetail() {
     return `${date.getMonth() + 1}月${date.getDate()}日`
   }
 
-  // プロフィールURLを取得
   const getProfileUrl = () => {
     if (typeof window !== 'undefined') {
       return window.location.href
@@ -90,7 +191,6 @@ export default function ProfileDetail() {
     return ''
   }
 
-  // 写真URLsを取得（photo_urlsがあればそれを使う、なければphoto_urlを配列化）
   const getPhotoUrls = (): string[] => {
     if (profile?.photo_urls && profile.photo_urls.length > 0) {
       return profile.photo_urls.filter(url => url && url.trim() !== '')
@@ -136,7 +236,6 @@ export default function ProfileDetail() {
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* ヘッダー部分：写真・名前・MBTI */}
           <div className="p-8 flex flex-col md:flex-row gap-8 items-start">
-            {/* 写真スライダー */}
             <div className="flex-shrink-0">
               <PhotoSlider 
                 photos={photoUrls}
@@ -148,15 +247,12 @@ export default function ProfileDetail() {
             <div className="flex-1">
               <div className="flex justify-between items-start">
                 <div>
-                  {/* 名前 */}
                   <h1 className="text-3xl font-bold text-dark">{profile.name}</h1>
                   
-                  {/* ローマ字名 */}
                   {profile.name_romaji && (
                     <p className="text-gray-500 text-sm mt-1">{profile.name_romaji}</p>
                   )}
                   
-                  {/* あだ名・誕生日 */}
                   <div className="flex flex-wrap items-center gap-3 mt-2">
                     {profile.nickname && (
                       <span className="text-primary font-medium">「{profile.nickname}」</span>
@@ -169,17 +265,33 @@ export default function ProfileDetail() {
                     )}
                   </div>
                   
-                  {/* MBTI */}
                   {profile.mbti && MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES] && (
                     <span className={`inline-block px-3 py-1 ${MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].color} rounded-full text-sm font-medium mt-3`}>
                       {MBTI_TYPES[profile.mbti as keyof typeof MBTI_TYPES].label}
                     </span>
                   )}
+
+                  {/* いいねボタン */}
+                  <div className="mt-4">
+                    <button
+                      onClick={handleLike}
+                      disabled={!currentUserId || isLiking}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition ${
+                        hasLiked
+                          ? 'bg-red-50 border-red-500 text-red-500'
+                          : 'bg-white border-gray-300 text-gray-600 hover:border-red-500 hover:text-red-500'
+                      } ${(!currentUserId || isLiking) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Heart
+                        size={20}
+                        fill={hasLiked ? 'currentColor' : 'none'}
+                      />
+                      <span className="font-medium">{likeCount}</span>
+                    </button>
+                  </div>
                 </div>
                 
-                {/* ボタン群 */}
                 <div className="flex gap-2">
-                  {/* QRコードボタン */}
                   <button
                     onClick={() => setIsQRModalOpen(true)}
                     className="flex items-center gap-1 px-4 py-2 bg-white text-primary border-2 border-primary rounded-full hover:bg-primary/5 transition"
@@ -189,7 +301,6 @@ export default function ProfileDetail() {
                     <span className="hidden sm:inline">QRコード</span>
                   </button>
                   
-                  {/* 編集ボタン（本人のみ） */}
                   {isOwner && (
                     <Link
                       href="/profile/edit"
@@ -204,7 +315,6 @@ export default function ProfileDetail() {
             </div>
           </div>
 
-          {/* 興味のある事業部セクション（上部） */}
           {profile.interested_departments && profile.interested_departments.length > 0 && (
             <div className="px-8 pb-6">
               <h2 className="text-sm font-bold text-gray-500 mb-3 flex items-center gap-2">
@@ -223,7 +333,6 @@ export default function ProfileDetail() {
 
           <div className="h-1 bg-gradient-to-r from-primary to-secondary"></div>
 
-          {/* 自己紹介セクション */}
           <div className="p-8 space-y-8">
             {profile.career && (
               <div>
@@ -275,7 +384,6 @@ export default function ProfileDetail() {
               </div>
             )}
 
-            {/* 自由タグセクション（SNSの上） */}
             {profile.tags && profile.tags.length > 0 && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3 flex items-center gap-2">
@@ -295,7 +403,6 @@ export default function ProfileDetail() {
               </div>
             )}
 
-            {/* SNSセクション（最後） */}
             {hasSnsLinks && (
               <div>
                 <h2 className="text-lg font-bold text-primary mb-3">■ SNS</h2>
@@ -364,10 +471,11 @@ export default function ProfileDetail() {
           </div>
         )}
 
+        <ProfileComments profileId={profile.id} profileUserId={profile.user_id} />
+
         <div className="h-16"></div>
       </div>
 
-      {/* QRコードモーダル */}
       <QRCodeModal
         isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}

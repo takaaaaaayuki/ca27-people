@@ -9,7 +9,7 @@ export type Profile = {
   user_id: string
   name: string
   photo_url: string | null
-  photo_urls: string[] | null  // ← 追加
+  photo_urls: string[] | null
   career: string | null
   effort: string | null
   goals: string | null
@@ -125,4 +125,34 @@ export type NotificationWithUser = Notification & {
     name: string
     photo_url: string | null
   } | null
+}
+
+export type ProfileComment = {
+  id: string
+  profile_id: string
+  user_id: string
+  content: string
+  created_at: string
+}
+
+export type ProfileCommentWithAuthor = ProfileComment & {
+  author: {
+    id: string
+    name: string
+    photo_url: string | null
+  } | null
+}
+
+export type ProfileCommentLike = {
+  id: string
+  comment_id: string
+  user_id: string
+  created_at: string
+}
+
+export type ProfileLike = {
+  id: string
+  profile_id: string
+  user_id: string
+  created_at: string
 }
