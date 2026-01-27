@@ -355,6 +355,10 @@ export default function EditProfile() {
   const [tagInput, setTagInput] = useState('')
   const [showDeptSelector, setShowDeptSelector] = useState(false)
   const [showMbtiSelector, setShowMbtiSelector] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -448,6 +452,74 @@ export default function EditProfile() {
       ...profile,
       tags: profile.tags?.filter((tag) => tag !== tagToRemove) || [],
     })
+  }
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!currentPassword) {
+      alert('現在のパスワードを入力してください')
+      return
+    }
+
+    if (!newPassword || !confirmPassword) {
+      alert('新しいパスワードを入力してください')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert('新しいパスワードが一致しません')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      alert('パスワードは6文字以上にしてください')
+      return
+    }
+
+    setChangingPassword(true)
+
+    try {
+      // まず現在のパスワードで再認証
+      const userStr = localStorage.getItem('user')
+      if (!userStr) {
+        alert('ログイン情報が見つかりません')
+        setChangingPassword(false)
+        return
+      }
+
+      const user = JSON.parse(userStr)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword
+      })
+
+      if (signInError) {
+        alert('現在のパスワードが正しくありません')
+        setChangingPassword(false)
+        return
+      }
+
+      // パスワード更新
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (error) {
+        console.error('Password change error:', error)
+        alert('パスワードの変更に失敗しました: ' + error.message)
+      } else {
+        alert('パスワードを変更しました！')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err)
+      alert('エラーが発生しました')
+    }
+
+    setChangingPassword(false)
   }
 
   const handleDeptToggle = (dept: string) => {
@@ -879,6 +951,56 @@ export default function EditProfile() {
                   </button>
                 </span>
               ))}
+            </div>
+          </div>
+
+          {/* パスワード変更セクション */}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <h2 className="text-lg font-bold text-primary mb-4">パスワード変更</h2>
+            <p className="text-sm text-gray-500 mb-4">パスワードを変更する場合は以下に入力してください</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">現在のパスワード</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="現在のパスワードを入力"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">新しいパスワード</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="6文字以上"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark mb-2">新しいパスワード（確認）</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="もう一度入力"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePasswordChange}
+                disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+                className="w-full py-3 bg-secondary text-white font-medium rounded-lg hover:bg-secondary/80 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {changingPassword ? '変更中...' : 'パスワードを変更'}
+              </button>
             </div>
           </div>
 

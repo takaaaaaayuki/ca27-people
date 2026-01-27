@@ -26,13 +26,23 @@ export default function ProfileCard({ profile }: Props) {
 
         <div className="p-4">
           <h3 className="font-bold text-lg text-dark mb-2">{profile.name}</h3>
-          {profile.interested_departments && profile.interested_departments.length > 0 && (
-            <div className="space-y-1">
-              {profile.interested_departments.slice(0, 2).map((dept) => (
-                <p key={dept} className="text-sm text-gray-500 line-clamp-1">
-                  {dept}
-                </p>
+          
+          {/* タグ表示（最大3個） */}
+          {profile.tags && profile.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {profile.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-block px-2 py-1 bg-secondary/20 text-primary rounded-full text-xs font-medium"
+                >
+                  #{tag}
+                </span>
               ))}
+              {profile.tags.length > 3 && (
+                <span className="inline-block px-2 py-1 text-gray-400 text-xs">
+                  +{profile.tags.length - 3}
+                </span>
+              )}
             </div>
           )}
         </div>
