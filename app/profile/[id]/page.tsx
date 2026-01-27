@@ -271,7 +271,7 @@ export default function ProfileDetail() {
                     </span>
                   )}
 
-                  {/* いいねボタン */}
+                  {/* いいねボタン
                   <div className="mt-4">
                     <button
                       onClick={handleLike}
@@ -288,7 +288,7 @@ export default function ProfileDetail() {
                       />
                       <span className="font-medium">{likeCount}</span>
                     </button>
-                  </div>
+                  </div> */}
                 </div>
                 
                 <div className="flex gap-2">
