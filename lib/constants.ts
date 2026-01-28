@@ -72,6 +72,7 @@ export const DEPARTMENT_OPTIONS: Record<string, Record<string, string[]>> = {
     ],
     "WINTICKET": [],
     "アニメ&IP事業本部": [],
+    "バイトツアー": [],
     "ライフスタイル管轄": [
       "CyberOwl",
       "AmebaLIFE事業部｜Amebaブログ",
@@ -105,6 +106,10 @@ export const DEPARTMENT_OPTIONS: Record<string, Record<string, string[]>> = {
       "アプリボット（ビジネスプロデュース事業部）",
       "アプリボット（DX事業部）",
     ],
+  },
+  "全社機能": {
+    "人事本部（ビジネスコース）": [],
+    "人事本部（テクノロジーコース）": [],
   },
 }
 
