@@ -95,18 +95,43 @@ export default function ProfileComments({ profileId, profileUserId }: ProfileCom
 
     setSubmitting(true)
 
-    const { error } = await supabase
+    const { data: newComment, error } = await supabase
       .from('profile_comments')
       .insert({
         profile_id: profileId,
         user_id: currentUserId,
         content: commentInput.trim()
       })
+      .select()
+      .single()
 
     if (error) {
       alert('コメントの投稿に失敗しました')
       console.error(error)
     } else {
+      // 自分自身へのコメントでない場合のみ通知を作成
+      if (currentUserId !== profileUserId) {
+        // コメント投稿者の名前を取得
+        const { data: commenterProfile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('user_id', currentUserId)
+          .single()
+
+        // 通知を作成
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: profileUserId,
+            type: 'comment',
+            title: 'プロフィールにコメントが付きました',
+            message: commentInput.trim(),
+            link: `/profile/${profileId}`,
+            related_user_id: currentUserId,
+            is_read: false
+          })
+      }
+
       setCommentInput('')
       await fetchComments()
     }

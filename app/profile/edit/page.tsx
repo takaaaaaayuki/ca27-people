@@ -546,6 +546,13 @@ export default function EditProfile() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // 名前の必須チェック
+    if (!profile.name || profile.name.trim() === '') {
+      alert('名前は必須項目です')
+      return
+    }
+    
     setSaving(true)
 
     try {
@@ -633,7 +640,9 @@ export default function EditProfile() {
             <h2 className="text-lg font-bold text-primary mb-4">基本情報</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-dark mb-2">名前 *</label>
+                <label className="block text-sm font-medium text-dark mb-2">
+                  名前 <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={profile.name || ''}
