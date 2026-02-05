@@ -22,6 +22,32 @@ export default function Home() {
   const [showDeptFilter, setShowDeptFilter] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
+  // 標準表示順: 入力割合(完成度)が高い順 → 登録が早い順(created_at昇順)
+  const getCompletionRate = (profile: Profile) => {
+    const checks = {
+      photo: !!(profile.photo_urls && profile.photo_urls.length > 0) || !!profile.photo_url,
+      career: !!profile.career && profile.career.trim().length > 0,
+      effort: !!profile.effort && profile.effort.trim().length > 0,
+      goals: !!profile.goals && profile.goals.trim().length > 0,
+      departments: !!profile.interested_departments && profile.interested_departments.length > 0,
+    }
+
+    const completedCount = Object.values(checks).filter(Boolean).length
+    const totalItems = Object.keys(checks).length
+    return Math.round((completedCount / totalItems) * 100)
+  }
+
+  const compareProfiles = (a: Profile, b: Profile) => {
+    const rateDiff = getCompletionRate(b) - getCompletionRate(a)
+    if (rateDiff !== 0) return rateDiff
+
+    const aTime = Date.parse(a.created_at)
+    const bTime = Date.parse(b.created_at)
+    if (!Number.isNaN(aTime) && !Number.isNaN(bTime)) return aTime - bTime
+    if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0
+    return Number.isNaN(aTime) ? 1 : -1
+  }
+
   useEffect(() => {
     // ログイン確認
     const userStr = localStorage.getItem('user')
@@ -48,7 +74,7 @@ export default function Home() {
         profile => profile.name !== 'guest' && !profile.user_id?.includes('guest')
       )
       setProfiles(filteredData)
-      setFilteredProfiles(filteredData)
+      setFilteredProfiles([...filteredData].sort(compareProfiles))
     }
 
     // 投稿取得（最新5件）
@@ -112,7 +138,7 @@ export default function Home() {
       result = result.filter(profile => profile.role === selectedRole)
     }
 
-    setFilteredProfiles(result)
+    setFilteredProfiles([...result].sort(compareProfiles))
   }, [searchText, selectedDepartment, selectedRole, profiles])
 
   const clearFilters = () => {
