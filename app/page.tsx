@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Search, Building2, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -12,6 +12,7 @@ import { DEPARTMENT_OPTIONS, ROLES, RoleKey } from '@/lib/constants'
 
 export default function Home() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([])
   const [posts, setPosts] = useState<PostWithAuthor[]>([])
@@ -21,6 +22,7 @@ export default function Home() {
   const [selectedRole, setSelectedRole] = useState<RoleKey | ''>('')
   const [showDeptFilter, setShowDeptFilter] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const didFocusRef = useRef<string | null>(null)
 
   // 標準表示順: 入力割合(完成度)が高い順 → 登録が早い順(created_at昇順)
   const getCompletionRate = (profile: Profile) => {
@@ -140,6 +142,61 @@ export default function Home() {
 
     setFilteredProfiles([...result].sort(compareProfiles))
   }, [searchText, selectedDepartment, selectedRole, profiles])
+
+  useEffect(() => {
+    const focusFromQuery = searchParams.get('focus')
+    let focusFromStorage: string | null = null
+    try {
+      focusFromStorage = sessionStorage.getItem('homeFocus')
+    } catch {
+      focusFromStorage = null
+    }
+
+    const focusId = focusFromQuery || focusFromStorage
+    if (loading) return
+    if (!focusId) return
+    if (didFocusRef.current === focusId) return
+
+    let cancelled = false
+    let attempts = 0
+
+    const tryScroll = () => {
+      if (cancelled) return
+      attempts += 1
+
+      const el = document.getElementById(`profile-${focusId}`)
+      if (el) {
+        // 描画/レイアウト反映を待ってからスクロール
+        requestAnimationFrame(() => {
+          if (cancelled) return
+          const headerEl = document.querySelector('header')
+          const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
+          const extraGap = 12
+          const rect = el.getBoundingClientRect()
+          const targetTop = window.scrollY + rect.top - headerHeight - extraGap
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'auto' })
+        })
+        didFocusRef.current = focusId
+        if (!focusFromQuery && focusFromStorage) {
+          try {
+            sessionStorage.removeItem('homeFocus')
+          } catch {
+            // ignore
+          }
+        }
+        return
+      }
+
+      if (attempts < 20) {
+        window.setTimeout(tryScroll, 100)
+      }
+    }
+
+    tryScroll()
+    return () => {
+      cancelled = true
+    }
+  }, [loading, filteredProfiles.length, searchParams])
 
   const clearFilters = () => {
     setSearchText('')

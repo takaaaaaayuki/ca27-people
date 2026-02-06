@@ -26,6 +26,17 @@ export default function ProfileDetail() {
   const [hasLiked, setHasLiked] = useState(false)
   const [isLiking, setIsLiking] = useState(false)
 
+  // ブラウザの「戻る」で一覧に戻った時も、該当ユーザー位置へ復元するための目印を保存
+  useEffect(() => {
+    const id = params?.id
+    if (!id) return
+    try {
+      sessionStorage.setItem('homeFocus', String(id))
+    } catch {
+      // ignore
+    }
+  }, [params?.id])
+
   useEffect(() => {
     async function fetchData() {
       const { data: profileData, error: profileError } = await supabase
@@ -228,7 +239,7 @@ export default function ProfileDetail() {
       <div className="bg-gradient-to-r from-primary to-secondary h-48"></div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-32">
-        <Link href="/" className="inline-flex items-center gap-1 text-white hover:underline mb-6">
+        <Link href={`/?focus=${profile.id}`} className="inline-flex items-center gap-1 text-white hover:underline mb-6">
           <ArrowLeft size={18} />
           <span>一覧に戻る</span>
         </Link>
