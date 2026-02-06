@@ -177,12 +177,11 @@ export default function Home() {
           window.scrollTo({ top: Math.max(0, targetTop), behavior: 'auto' })
         })
         didFocusRef.current = focusId
-        if (!focusFromQuery && focusFromStorage) {
-          try {
-            sessionStorage.removeItem('homeFocus')
-          } catch {
-            // ignore
-          }
+        // 復元スクロールは1回だけにする（`?focus=` / sessionStorage どちら経由でも消す）
+        try {
+          sessionStorage.removeItem('homeFocus')
+        } catch {
+          // ignore
         }
         return
       }
