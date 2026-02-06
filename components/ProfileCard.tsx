@@ -8,7 +8,11 @@ type Props = {
 
 export default function ProfileCard({ profile }: Props) {
   return (
-    <Link href={`/profile/${profile.id}`}>
+    <Link
+      href={`/profile/${profile.id}`}
+      id={`profile-${profile.id}`}
+      className="block scroll-mt-28"
+    >
       <div className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer">
         <div className="aspect-[4/3] bg-cream overflow-hidden">
           {profile.photo_url ? (
