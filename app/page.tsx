@@ -159,6 +159,8 @@ export default function Home() {
 
     let cancelled = false
     let attempts = 0
+    let timeoutId: number | null = null
+    let rafId: number | null = null
 
     const tryScroll = () => {
       if (cancelled) return
@@ -167,7 +169,7 @@ export default function Home() {
       const el = document.getElementById(`profile-${focusId}`)
       if (el) {
         // 描画/レイアウト反映を待ってからスクロール
-        requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => {
           if (cancelled) return
           const headerEl = document.querySelector('header')
           const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 0
@@ -187,13 +189,19 @@ export default function Home() {
       }
 
       if (attempts < 20) {
-        window.setTimeout(tryScroll, 100)
+        timeoutId = window.setTimeout(tryScroll, 100)
       }
     }
 
     tryScroll()
     return () => {
       cancelled = true
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+      }
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId)
+      }
     }
   }, [loading, filteredProfiles.length, searchParams])
 
