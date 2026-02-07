@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Heart, MessageCircle, Trash2, User, Link as LinkIcon, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Heart, MessageCircle, Trash2, User, Link as LinkIcon, AlertCircle, ArrowLeft, Edit3 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Post, CommentWithAuthor } from '@/lib/types'
 import { formatText } from '@/lib/textFormatter'
@@ -302,6 +302,7 @@ export default function PostDetailPage() {
 
   const typeInfo = getTypeLabel(post.post_type, post.is_official)
   const canDeletePost = isAdmin || userId === post.user_id
+  const canEditPost = canDeletePost
 
   return (
     <main className="min-h-screen bg-cream">
@@ -376,12 +377,28 @@ export default function PostDetailPage() {
             )}
           </div>
 
-          {canDeletePost && (
+          {(canEditPost || canDeletePost) && (
             <div className="px-8 py-4 bg-gray-50 border-t border-gray-100">
-              <button onClick={handleDeletePost} className="flex items-center gap-1 px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition">
-                <Trash2 size={16} />
-                <span>この記事を削除</span>
-              </button>
+              <div className="flex items-center gap-3">
+                {canEditPost && (
+                  <Link
+                    href={`/posts/${post.id}/edit`}
+                    className="flex items-center gap-1 px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-secondary transition"
+                  >
+                    <Edit3 size={16} />
+                    <span>編集</span>
+                  </Link>
+                )}
+                {canDeletePost && (
+                  <button
+                    onClick={handleDeletePost}
+                    className="flex items-center gap-1 px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition"
+                  >
+                    <Trash2 size={16} />
+                    <span>この記事を削除</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </article>
